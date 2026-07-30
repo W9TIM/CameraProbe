@@ -101,6 +101,10 @@ Stops and removes the LaunchAgent and the installed app, and asks before removin
 
 CameraProbe shells out to `/usr/bin/log stream` with a predicate that matches `cameracaptured`'s `DidStartRunning`/`DidStopRunning` events - the same signal macOS's own camera indicator light relies on. When the camera turns on, it waits briefly (to let the capturing app become frontmost), asks `NSWorkspace` which application is active, then notifies the relay and Home Assistant. When it turns off, both get an "off" notification immediately.
 
+## Relay firmware
+
+The `firmware/` folder has the ESP8266 sketch (Wemos D1 Mini) that runs the physical relay CameraProbe talks to by default - see [firmware/README.md](firmware/README.md) for wiring, Arduino IDE setup, and flashing instructions. If you already have relay hardware exposing `GET /on` / `GET /off`, you don't need it; just point `relay.host` in `config.json` at your existing device.
+
 ## Project layout
 
 ```
@@ -116,6 +120,11 @@ CameraProbe/
 │   ├── ActiveApplication.swift Frontmost-app lookup
 │   ├── Diagnostics.swift       --test / --status / --help implementation
 │   └── Utilities.swift         DNS check
+├── firmware/
+│   ├── README.md                          Wiring, Arduino IDE setup, flashing
+│   └── CameraProbeRelay/
+│       ├── CameraProbeRelay.ino            ESP8266 relay controller sketch
+│       └── secrets.h.example               WiFi credentials template (copy to secrets.h)
 ├── install.sh
 ├── uninstall.sh
 ├── com.tim.cameraprobe.plist.template

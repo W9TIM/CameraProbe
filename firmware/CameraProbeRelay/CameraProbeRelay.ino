@@ -1,0 +1,85 @@
+/*
+ * CameraProbe Relay Firmware
+ *
+ * Matches CameraProbe's default config (relay.host = "onair.local",
+ * relay.port = 80): responds to GET /on and GET /off with a plain-text
+ * reply, plus a /status endpoint for checking the current relay state.
+ */
+
+#include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
+#include <ESP8266mDNS.h>
+#include "secrets.h" // copy secrets.h.example to secrets.h and fill in your WiFi credentials
+
+const char* ssid = WIFI_SSID;
+const char* password = WIFI_PASSWORD;
+
+ESP8266WebServer server(80);
+
+const int relayPin = D1;
+
+void handleRoot() {
+  server.send(200, "text/plain",
+              "Camera Relay Controller\n"
+              "/on\n"
+              "/off\n"
+              "/status");
+}
+
+void handleOn() {
+  digitalWrite(relayPin, HIGH);
+  server.send(200, "text/plain", "Relay ON");
+}
+
+void handleOff() {
+  digitalWrite(relayPin, LOW);
+  server.send(200, "text/plain", "Relay OFF");
+}
+
+void handleStatus() {
+
+  String state =
+      digitalRead(relayPin) ? "ON" : "OFF";
+
+  server.send(200, "text/plain", state);
+}
+
+void setup() {
+
+  pinMode(relayPin, OUTPUT);
+  digitalWrite(relayPin, LOW);
+
+  Serial.begin(115200);
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+
+  Serial.print("Connecting");
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  if (MDNS.begin("onair")) {
+      Serial.println("mDNS responder started");
+  }
+
+  Serial.println();
+  Serial.print("Connected: ");
+  Serial.println(WiFi.localIP());
+
+  server.on("/", handleRoot);
+  server.on("/on", handleOn);
+  server.on("/off", handleOff);
+  server.on("/status", handleStatus);
+
+  server.begin();
+
+  Serial.println("HTTP Server Started");
+}
+
+void loop() {
+  MDNS.update();
+  server.handleClient();
+}

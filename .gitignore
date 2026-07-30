@@ -11,3 +11,7 @@
 config.json
 
 *.log
+
+# Real WiFi credentials for the ESP8266 relay firmware - see
+# firmware/CameraProbeRelay/secrets.h.example for the tracked template.
+firmware/CameraProbeRelay/secrets.h
