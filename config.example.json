@@ -1,0 +1,12 @@
+{
+  "relay": {
+    "enabled": true,
+    "host": "onair.local",
+    "port": 80
+  },
+  "homeAssistant": {
+    "enabled": true,
+    "host": "homeassistant.local",
+    "port": 8123
+  }
+}

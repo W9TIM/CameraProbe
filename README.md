@@ -1,0 +1,139 @@
+# CameraProbe
+
+A macOS background utility that watches for camera activity and reacts to it: flips a physical "on air" relay, and/or fires a Home Assistant webhook, whenever your Mac's camera turns on or off.
+
+Runs as a LaunchAgent, so it starts automatically at login and stays out of the way.
+
+## Features
+
+- Detects camera start/stop by watching the unified log stream for `cameracaptured` events - no polling, no private APIs.
+- Reports which application grabbed the camera (Zoom, FaceTime, Photo Booth, Teams, browsers, etc.).
+- Controls an HTTP-controlled relay (e.g. an ESP8266/ESP32 running Tasmota or custom firmware) for a physical "on air" light.
+- Fires Home Assistant webhooks (`camera_on` / `camera_off`) so you can build automations on top of camera state.
+- Configuration lives in a JSON file, not compiled-in constants - change a hostname without rebuilding.
+- Self-healing: if the underlying log-stream process dies, it restarts automatically with backoff.
+- `CameraProbe --test` and `CameraProbe --status` for quick diagnostics.
+
+## Requirements
+
+- macOS 14 or later.
+- Xcode Command Line Tools (for `swift build`): `xcode-select --install`.
+- An HTTP-controlled relay reachable on your LAN (optional - can be disabled in config).
+- A Home Assistant instance with webhook automations for `camera_on` / `camera_off` (optional - can be disabled in config).
+
+## Install
+
+```
+git clone <this repository>
+cd CameraProbe
+./install.sh
+```
+
+Run it as your normal user, **not** with `sudo` - it prompts for your password only for the specific steps that need elevated access (installing to `/Applications`, writing the system-wide config).
+
+On first install it'll ask for your relay and Home Assistant hostnames (defaults shown in brackets, just press Return to accept). It then builds the release binary, installs it, creates the LaunchAgent, and runs a connectivity check.
+
+The first time the installed binary talks to the network, macOS will show a **Local Network** permission prompt - click Allow. The binary is code-signed with a stable identifier during install specifically so this approval survives future reinstalls after code changes.
+
+See [INSTALL.md](INSTALL.md) for a more detailed walkthrough and troubleshooting.
+
+## Configuration
+
+`/Library/Application Support/CameraProbe/config.json`:
+
+```json
+{
+  "relay": {
+    "enabled": true,
+    "host": "onair.local",
+    "port": 80
+  },
+  "homeAssistant": {
+    "enabled": true,
+    "host": "homeassistant.local",
+    "port": 8123
+  }
+}
+```
+
+Every field is optional - anything you omit falls back to the default shown above. Edit this file and restart CameraProbe (`launchctl kickstart -k gui/$(id -u)/com.tim.cameraprobe`) to pick up changes; no rebuild needed. A malformed config file is logged as a warning and CameraProbe falls back to defaults rather than failing to start.
+
+See `config.example.json` for a copyable template.
+
+## Usage
+
+CameraProbe normally runs unattended under the LaunchAgent, but the binary supports a few commands directly:
+
+```
+CameraProbe                Start monitoring (this is what the LaunchAgent runs)
+CameraProbe --status       One-shot summary: relay, Home Assistant, LaunchAgent, camera monitor
+CameraProbe --test         Full diagnostics: DNS, relay, Home Assistant, log access, LaunchAgent
+CameraProbe --version      Print the version
+CameraProbe --help         Show usage
+```
+
+Example `--status` output:
+
+```
+CameraProbe 1.0.0
+
+Relay...............OK
+Home Assistant......OK
+LaunchAgent.........Loaded
+Camera Monitor......Running
+```
+
+Live logs:
+
+```
+log stream --predicate 'subsystem == "com.tim.cameraprobe"'
+```
+
+## Uninstall
+
+```
+./uninstall.sh
+```
+
+Stops and removes the LaunchAgent and the installed app, and asks before removing your configuration file.
+
+## How it works
+
+CameraProbe shells out to `/usr/bin/log stream` with a predicate that matches `cameracaptured`'s `DidStartRunning`/`DidStopRunning` events - the same signal macOS's own camera indicator light relies on. When the camera turns on, it waits briefly (to let the capturing app become frontmost), asks `NSWorkspace` which application is active, then notifies the relay and Home Assistant. When it turns off, both get an "off" notification immediately.
+
+## Project layout
+
+```
+CameraProbe/
+├── Package.swift
+├── Sources/CameraProbe/
+│   ├── main.swift              Entry point: CLI flag parsing, startup, signal handling
+│   ├── Configuration.swift     Config file schema, loading, shared constants
+│   ├── Logger.swift            OSLog setup, startup banner
+│   ├── CameraMonitor.swift     Camera state + log-stream subprocess management
+│   ├── Relay.swift             Relay HTTP calls
+│   ├── HomeAssistant.swift     Home Assistant webhook calls
+│   ├── ActiveApplication.swift Frontmost-app lookup
+│   ├── Diagnostics.swift       --test / --status / --help implementation
+│   └── Utilities.swift         DNS check
+├── install.sh
+├── uninstall.sh
+├── com.tim.cameraprobe.plist.template
+├── config.example.json
+├── README.md
+├── INSTALL.md
+├── CHANGELOG.md
+└── LICENSE
+```
+
+## Troubleshooting
+
+**"UNREACHABLE" during install, but the app works fine once running.** `.local` mDNS hostnames can be slow on a cold lookup, and `curl` doesn't race IPv4/IPv6 the way `URLSession` does. The install script warms the resolver and forces IPv4 before checking, but a genuinely flaky network can still produce a false negative here - run `CameraProbe --test` afterward to double check.
+
+**Local Network permission dialog reappears after a rebuild.** This means the binary's signature changed. `install.sh` re-signs it with a fixed identifier each time specifically to prevent this - make sure you're reinstalling via `./install.sh` rather than copying the binary manually.
+
+**Nothing happens when the camera turns on.** Run `CameraProbe --test` to check each subsystem individually, and `log stream --predicate 'subsystem == "com.tim.cameraprobe"'` to watch live logs while triggering the camera (e.g. open Photo Booth).
+
+## License
+
+MIT - see [LICENSE](LICENSE).

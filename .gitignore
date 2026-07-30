@@ -1,0 +1,13 @@
+# Swift Package Manager build artifacts
+.build/
+.swiftpm/
+
+# macOS
+.DS_Store
+
+# In case a local config ever ends up in the project directory by
+# accident - the real one lives at
+# /Library/Application Support/CameraProbe/config.json, outside the repo.
+config.json
+
+*.log
