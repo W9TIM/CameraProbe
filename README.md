@@ -105,6 +105,10 @@ CameraProbe shells out to `/usr/bin/log stream` with a predicate that matches `c
 
 The `firmware/` folder has the ESP8266 sketch (Wemos D1 Mini) that runs the physical relay CameraProbe talks to by default - see [firmware/README.md](firmware/README.md) for wiring, Arduino IDE setup, and flashing instructions. If you already have relay hardware exposing `GET /on` / `GET /off`, you don't need it; just point `relay.host` in `config.json` at your existing device.
 
+## Home Assistant setup
+
+CameraProbe calls two built-in Home Assistant webhooks (`camera_on` / `camera_off`) - see [homeassistant/README.md](homeassistant/README.md) for how to wire those up to an automation, with both a UI walkthrough and a copyable YAML example.
+
 ## Project layout
 
 ```
@@ -125,6 +129,9 @@ CameraProbe/
 │   └── CameraProbeRelay/
 │       ├── CameraProbeRelay.ino            ESP8266 relay controller sketch
 │       └── secrets.h.example               WiFi credentials template (copy to secrets.h)
+├── homeassistant/
+│   ├── README.md                           UI + YAML setup instructions
+│   └── automations.example.yaml            Copyable automation definitions
 ├── install.sh
 ├── uninstall.sh
 ├── com.tim.cameraprobe.plist.template
