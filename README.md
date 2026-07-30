@@ -52,11 +52,20 @@ See [INSTALL.md](INSTALL.md) for a more detailed walkthrough and troubleshooting
     "enabled": true,
     "host": "homeassistant.local",
     "port": 8123
-  }
+  },
+  "ignoredApplications": []
 }
 ```
 
 Every field is optional - anything you omit falls back to the default shown above. Edit this file and restart CameraProbe (`launchctl kickstart -k gui/$(id -u)/com.tim.cameraprobe`) to pick up changes; no rebuild needed. A malformed config file is logged as a warning and CameraProbe falls back to defaults rather than failing to start.
+
+**`ignoredApplications`** is an exclude list: every app that activates the camera still triggers a notification by default (empty list, same as before this existed), but you can name specific apps to skip - for privacy (e.g. Photo Booth) or gameplay capture you don't want broadcasting "on air":
+
+```json
+"ignoredApplications": ["Photo Booth", "OBS"]
+```
+
+Matching is case-insensitive and uses the same app name CameraProbe logs/reports (`log stream --predicate 'subsystem == "com.tim.cameraprobe"'` will show you the exact name it detected if you're not sure). When an ignored app is what grabbed the camera, neither the relay nor Home Assistant gets notified for that session - including the matching "off" event, so you won't see a stray "camera off" with no preceding "on".
 
 See `config.example.json` for a copyable template.
 

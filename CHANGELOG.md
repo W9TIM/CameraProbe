@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.1.0] - 2026-07-30
+
+### Added
+
+- `ignoredApplications` config option - an exclude list of app names (e.g. `["Photo Booth"]`) that never trigger a relay/Home Assistant notification, for privacy or gameplay-capture apps. Matching is case-insensitive. Empty by default, so out of the box every app still notifies, unchanged from 1.0.0.
+- ESP8266 relay firmware (`firmware/`) and Home Assistant automation setup docs (`homeassistant/`), for a complete end-to-end reference setup.
+
 ## [1.0.0] - 2026-07-30
 
 ### Added

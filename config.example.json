@@ -8,5 +8,6 @@
     "enabled": true,
     "host": "homeassistant.local",
     "port": 8123
-  }
+  },
+  "ignoredApplications": []
 }

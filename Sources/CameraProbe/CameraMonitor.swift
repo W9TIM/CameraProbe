@@ -20,6 +20,13 @@ final class CameraState: @unchecked Sendable {
     private var _active = false
     private var _initialized = false
     private var _generation = 0
+    // Whether the "camera on" notification was actually sent for the
+    // current session (false if the detected app is in ignoredApplications,
+    // or if the camera turned off again before detection finished). Reset
+    // on every new activation. Read on deactivate() so the matching "off"
+    // notification is suppressed too - otherwise an ignored app would
+    // still produce a lone "camera off" with no preceding "on".
+    private var _currentSessionNotified = false
 
     var initialized: Bool {
         lock.lock(); defer { lock.unlock() }
@@ -38,16 +45,29 @@ final class CameraState: @unchecked Sendable {
         guard !_active else { return nil }
         _active = true
         _generation += 1
+        _currentSessionNotified = false
         return _generation
     }
 
-    /// Transitions to inactive if currently active.
-    /// Returns true if a transition happened.
-    func deactivate() -> Bool {
+    /// Marks the current session as notified, provided `generation` is
+    /// still the active one (i.e. the camera hasn't turned off and back
+    /// on again since).
+    func markNotified(generation: Int) {
         lock.lock(); defer { lock.unlock() }
-        guard _active else { return false }
+        guard _active, _generation == generation else { return }
+        _currentSessionNotified = true
+    }
+
+    /// Transitions to inactive if currently active.
+    /// Returns (didDeactivate, shouldNotify) - shouldNotify is true only
+    /// if the matching "on" notification was actually sent.
+    func deactivate() -> (didDeactivate: Bool, shouldNotify: Bool) {
+        lock.lock(); defer { lock.unlock() }
+        guard _active else { return (false, false) }
         _active = false
-        return true
+        let shouldNotify = _currentSessionNotified
+        _currentSessionNotified = false
+        return (true, shouldNotify)
     }
 
     /// True if still active and no newer activation has occurred since `generation`.
@@ -212,6 +232,14 @@ final class CameraMonitorService: @unchecked Sendable {
 
                 let application = getActiveApplication()
 
+                if isApplicationIgnored(application) {
+                    print("Camera application:", application, "(ignored, no notification sent)")
+                    logger.info("CAMERA ON - \(application, privacy: .public) (ignored by config)")
+                    return
+                }
+
+                cameraState.markNotified(generation: generation)
+
                 print("Camera application:", application)
                 logger.info("CAMERA ON - \(application, privacy: .public)")
 
@@ -221,7 +249,13 @@ final class CameraMonitorService: @unchecked Sendable {
         }
 
         if line.contains("DidStopRunning") {
-            guard cameraState.deactivate() else { return }
+            let (didDeactivate, shouldNotify) = cameraState.deactivate()
+            guard didDeactivate else { return }
+
+            guard shouldNotify else {
+                logger.info("CAMERA OFF (ignored app - matching \"on\" was never notified)")
+                return
+            }
 
             logger.info("CAMERA OFF")
 

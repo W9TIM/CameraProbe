@@ -7,7 +7,7 @@ import Foundation
 // instead of the same string typed in three places.
 
 let cameraProbeLabel = "com.tim.cameraprobe"
-let appVersion = "1.0.0"
+let appVersion = "1.1.0"
 
 // MARK: - Configuration file schema
 //
@@ -23,13 +23,16 @@ let appVersion = "1.0.0"
 //     "enabled": true,
 //     "host": "homeassistant.local",
 //     "port": 8123
-//   }
+//   },
+//   "ignoredApplications": ["Photo Booth"]
 // }
 //
 // Every field is optional in the file itself - anything omitted falls
 // back to the same defaults CameraProbe shipped with before this file
 // existed, so a partial config.json (e.g. just overriding relay.host)
-// is valid.
+// is valid. ignoredApplications defaults to empty, so out of the box
+// every app that activates the camera still triggers a notification -
+// it's opt-in per app, not a behavior change.
 
 struct RelayConfig: Decodable {
     var enabled: Bool
@@ -80,20 +83,27 @@ struct HomeAssistantConfig: Decodable {
 struct AppConfig: Decodable {
     var relay: RelayConfig
     var homeAssistant: HomeAssistantConfig
+    var ignoredApplications: [String]
 
     enum CodingKeys: String, CodingKey {
-        case relay, homeAssistant
+        case relay, homeAssistant, ignoredApplications
     }
 
-    init(relay: RelayConfig = RelayConfig(), homeAssistant: HomeAssistantConfig = HomeAssistantConfig()) {
+    init(
+        relay: RelayConfig = RelayConfig(),
+        homeAssistant: HomeAssistantConfig = HomeAssistantConfig(),
+        ignoredApplications: [String] = []
+    ) {
         self.relay = relay
         self.homeAssistant = homeAssistant
+        self.ignoredApplications = ignoredApplications
     }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         relay = try container.decodeIfPresent(RelayConfig.self, forKey: .relay) ?? RelayConfig()
         homeAssistant = try container.decodeIfPresent(HomeAssistantConfig.self, forKey: .homeAssistant) ?? HomeAssistantConfig()
+        ignoredApplications = try container.decodeIfPresent([String].self, forKey: .ignoredApplications) ?? []
     }
 }
 
@@ -137,6 +147,18 @@ let enableRelay = appConfig.relay.enabled
 let homeAssistantHost = appConfig.homeAssistant.host
 let homeAssistantPort = appConfig.homeAssistant.port
 let enableHomeAssistant = appConfig.homeAssistant.enabled
+
+// Apps in this list are still detected internally (camera state tracking
+// keeps working correctly for whatever runs next), but never trigger a
+// relay/Home Assistant notification - useful for privacy (e.g. Photo
+// Booth) or gameplay capture apps you don't want broadcasting "on air".
+// Matching is case-insensitive. Empty by default, so out of the box
+// every app still notifies, same as before this config existed.
+let ignoredApplications = appConfig.ignoredApplications
+
+func isApplicationIgnored(_ application: String) -> Bool {
+    ignoredApplications.contains { $0.caseInsensitiveCompare(application) == .orderedSame }
+}
 
 // How long to wait after the camera turns on before asking macOS which
 // app is frontmost. NSWorkspace.frontmostApplication is not necessarily
