@@ -114,6 +114,12 @@ CameraProbe shells out to `/usr/bin/log stream` with a predicate that matches `c
 
 The `firmware/` folder has the ESP8266 sketch (Wemos D1 Mini) that runs the physical relay CameraProbe talks to by default - see [firmware/README.md](firmware/README.md) for wiring, Arduino IDE setup, and flashing instructions. If you already have relay hardware exposing `GET /on` / `GET /off`, you don't need it; just point `relay.host` in `config.json` at your existing device.
 
+The low voltage relay is used for controlling power to a 5V (USB) light (On/Off) via WiFi. The control unit is constructed with a Wemos D1 Mini (ESP8266) with a single relay shield attached.
+
+This can be housed in a simple 3D printable enclosure and mounted near or for shaddow box lights, inside to keep it out of the way. This arrangement will require two USB connections. One to power the Wemos D1 and one to power the light itself, which will be switched on/off when the +5v line is interrupted by the relay shield. 
+
+Photo's and 3D Printable files are included with this project.
+
 ## Home Assistant setup
 
 CameraProbe calls two built-in Home Assistant webhooks (`camera_on` / `camera_off`) - see [homeassistant/README.md](homeassistant/README.md) for how to wire those up to an automation, with both a UI walkthrough and a copyable YAML example.
