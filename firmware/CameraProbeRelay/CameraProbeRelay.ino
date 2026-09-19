@@ -13,6 +13,7 @@
 
 const char* ssid = WIFI_SSID;
 const char* password = WIFI_PASSWORD;
+const char* hostname = NET_HOSTNAME;
 
 ESP8266WebServer server(80);
 
@@ -54,14 +55,15 @@ void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
 
-  Serial.print("Connecting");
+  Serial.print("Connecting ");
 
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
 
-  if (MDNS.begin("onair")) {
+
+  if (MDNS.begin(hostname)) { //edit this line to change the local hostname 
       Serial.println("mDNS responder started");
   }
 
