@@ -22,10 +22,11 @@ final class CameraState: @unchecked Sendable {
     private var _generation = 0
     // Whether the "camera on" notification was actually sent for the
     // current session (false if the detected app is in ignoredApplications,
-    // or if the camera turned off again before detection finished). Reset
-    // on every new activation. Read on deactivate() so the matching "off"
-    // notification is suppressed too - otherwise an ignored app would
-    // still produce a lone "camera off" with no preceding "on".
+    // if notifications are paused via the menu bar, or if the camera
+    // turned off again before detection finished). Reset on every new
+    // activation. Read on deactivate() so the matching "off" notification
+    // is suppressed too - otherwise a suppressed "on" would still produce
+    // a lone "camera off" with no preceding "on".
     private var _currentSessionNotified = false
 
     var initialized: Bool {
@@ -78,6 +79,49 @@ final class CameraState: @unchecked Sendable {
 }
 
 let cameraState = CameraState()
+
+// MARK: - Visible Camera Activity
+//
+// Tracks whether the camera is currently active AND being used by an
+// application that isn't in the ignoredApplications exclude list. This
+// is the sole source of truth for the menu bar's red dot - deliberately
+// local-only, independent of the relay/Home Assistant integrations and
+// whether they're even enabled (see StatusBarController). Changes are
+// pushed out instantly via the notification below rather than polled.
+//
+// Deliberately tracks raw activity only, independent of Inactivate/pause
+// - StatusBarController is what combines this with pauseState.isPaused
+// to decide the dot's actual on-screen state (dark while paused, per the
+// same intent as the relay/Home Assistant suppression).
+extension Notification.Name {
+    static let cameraProbeVisibleActivityChanged = Notification.Name("CameraProbeVisibleActivityChanged")
+}
+
+final class CameraActivityIndicator: @unchecked Sendable {
+    private let lock = NSLock()
+    private var _isVisible = false
+
+    var isVisible: Bool {
+        lock.lock(); defer { lock.unlock() }
+        return _isVisible
+    }
+
+    func setVisible(_ value: Bool) {
+        lock.lock()
+        let changed = _isVisible != value
+        _isVisible = value
+        lock.unlock()
+
+        guard changed else { return }
+        NotificationCenter.default.post(
+            name: .cameraProbeVisibleActivityChanged,
+            object: nil,
+            userInfo: ["active": value]
+        )
+    }
+}
+
+let cameraActivityIndicator = CameraActivityIndicator()
 
 // MARK: - Camera Monitor Service
 //
@@ -153,7 +197,7 @@ final class CameraMonitorService: @unchecked Sendable {
         }
     }
 
-    /// Stops the log stream intentionally (e.g. on SIGINT/SIGTERM).
+    /// Stops the log stream intentionally (e.g. on SIGINT/SIGTERM, or app quit).
     /// Marked so the termination handler doesn't treat this as a crash.
     func stop() {
         lock.lock()
@@ -231,8 +275,20 @@ final class CameraMonitorService: @unchecked Sendable {
                 }
 
                 let application = getActiveApplication()
+                let isIgnored = isApplicationIgnored(application)
 
-                if isApplicationIgnored(application) {
+                // Raw activity signal only - StatusBarController combines
+                // this with pauseState.isPaused to decide the dot's actual
+                // on-screen state.
+                cameraActivityIndicator.setVisible(!isIgnored)
+
+                if pauseState.isPaused {
+                    print("Camera application:", application, "(paused, no notification sent)")
+                    logger.info("CAMERA ON - \(application, privacy: .public) (paused via menu bar)")
+                    return
+                }
+
+                if isIgnored {
                     print("Camera application:", application, "(ignored, no notification sent)")
                     logger.info("CAMERA ON - \(application, privacy: .public) (ignored by config)")
                     return
@@ -252,8 +308,10 @@ final class CameraMonitorService: @unchecked Sendable {
             let (didDeactivate, shouldNotify) = cameraState.deactivate()
             guard didDeactivate else { return }
 
+            cameraActivityIndicator.setVisible(false)
+
             guard shouldNotify else {
-                logger.info("CAMERA OFF (ignored app - matching \"on\" was never notified)")
+                logger.info("CAMERA OFF (suppressed - matching \"on\" was never notified)")
                 return
             }
 
