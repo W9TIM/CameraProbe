@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Console-subsystem shim for the CLI flags. CameraProbe.exe is a GUI
+    (WinExe) app so it never flashes a console at login, but that means
+    shells don't wait for it, so the test/status output and exit codes would
+    be lost. This builds CameraProbe.Cli.exe and copies it to CameraProbe.com
+    next to CameraProbe.exe: typing `CameraProbe` in cmd/PowerShell resolves
+    .com before .exe (PATHEXT), the same trick as Visual Studio's devenv.com.
+
+    This project's output folder holds the complete app (it pulls in
+    CameraProbe.exe/.dll via the project reference), so it is what gets run
+    and packaged.
+  -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>CameraProbe.Cli</AssemblyName>
+    <RootNamespace>CameraProbe.Cli</RootNamespace>
+    <ApplicationIcon>..\CameraProbe.Windows\Assets\AppIcon.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CameraProbe.Windows\CameraProbe.Windows.csproj" />
+  </ItemGroup>
+
+  <Target Name="CopyComShim" AfterTargets="Build">
+    <Copy SourceFiles="$(OutDir)$(AssemblyName).exe" DestinationFiles="$(OutDir)CameraProbe.com" SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="PublishComShim" AfterTargets="Publish">
+    <Copy SourceFiles="$(PublishDir)$(AssemblyName).exe" DestinationFiles="$(PublishDir)CameraProbe.com" SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

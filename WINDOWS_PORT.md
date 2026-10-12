@@ -15,13 +15,14 @@ Everything is configured from a Preferences window. The macOS version (v2.0.0, S
 ## Behavior to reproduce exactly
 
 **Camera on:**
-- Detect camera start. Wait `activeApplicationDetectionDelay` = 3 seconds, then determine which application has the camera (on macOS this is the frontmost app; on Windows the registry gives the real app - see below).
+- Detect camera start. On macOS: wait `activeApplicationDetectionDelay` = 3 seconds, then take the frontmost app. **On Windows: no delay** - the sensor activity monitor reports the actual process using the camera immediately (decided 2026-10-12 after testing, see below).
 - If the app is in `ignoredApplications` (case-insensitive match) OR Inactivate is on: send nothing for this session.
 - Otherwise: `GET /on` to the relay, and POST the `camera_on` webhook with the application name.
 
 **Camera off:**
 - Send `GET /off` and the `camera_off` webhook **only if the matching "on" was actually sent** for that session. Never send a lone "off" with no preceding "on".
 - If the camera turns off during the 3-second wait, do not send "on" at all (macOS uses a generation counter for this - see `CameraState` in `CameraMonitor.swift`).
+- **Windows only: 2-second off grace.** The camera only counts as off once it has stayed off for 2 seconds; if it comes back within that window the session continues and nothing is sent. Browser pages restart the stream repeatedly (e.g. webcamtests.com stopped/started 6 times in 18s with 0.3-0.6s gaps), which would otherwise flap the relay.
 
 **Relay HTTP** (firmware in `firmware/CameraProbeRelay/`): `GET http://{host}:{port}/on`, `/off`, `/status` (`/status` returns the text `ON` or `OFF`). 5-second timeouts.
 
@@ -55,15 +56,21 @@ Every field is optional; missing fields use the defaults shown. A malformed file
 
 ## Windows implementation plan
 
-**Stack:** C# on .NET 8, WinForms (simplest for a tray app). Visual Studio 2022 Community or VS Code with the C# Dev Kit. Put the project in a new folder (e.g. `windows/CameraProbe.Windows/`) so the macOS sources are untouched.
+**Stack:** C# on .NET 8, WinForms (simplest for a tray app). Visual Studio 2022 Community or VS Code with the C# Dev Kit. Put the project in a new folder (e.g. `windows/CameraProbe.Windows/`) so the macOS sources are untouched. `windows/global.json` pins the .NET 8 SDK (the NUC also has SDK 10 installed, which `dotnet` would otherwise pick). Note .NET 8 support ends 2026-11-10; moving to .NET 10 LTS later is a one-line `TargetFramework` change.
 
-**Camera detection:** Windows records camera use in the registry:
-`HKCU\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam`
-- Packaged (Store) apps have a subkey named by package family name.
-- Desktop apps are under a `NonPackaged` subkey; the subkey name is the exe path with `\` replaced by `#`.
-- Each app subkey has `LastUsedTimeStart` and `LastUsedTimeStop` (QWORD, Windows FILETIME). Camera is in use by that app when Start is non-zero and Stop is 0.
-- Poll about once per second across all app subkeys (or use `RegNotifyChangeKeyValue`). Derive a friendly app name from the exe filename / package name; this should be more accurate than the macOS frontmost-app guess, so the 3-second delay may be reducible - but keep it unless testing shows it is unnecessary.
-- **This is from memory and must be verified on the NUC with a real USB webcam** before building on it. Check how the keys behave with several apps (Camera app, browser, Teams/Zoom) and note any Windows 11 version differences.
+**Camera detection: Media Foundation sensor activity monitor** (`MFCreateSensorActivityMonitor` in `mfsensorgroup.dll`, interfaces in `mfidl.h`). It calls back with a report per camera device listing each process using it, its PID, and whether it is streaming. Map PID -> exe path (`QueryFullProcessImageName`) -> friendly name (file description, e.g. "Zoom Meetings", falling back to the exe name). Prototype: `windows/SensorProbe/`.
+
+Verified 2026-10-12 on the NUC (Windows 11 Pro 26H2, build 26300.9550, eMeet C960 USB webcam):
+
+| App | Result |
+|---|---|
+| Windows Camera (Store app) | Clean on/off, `WindowsCamera.exe`, description "Windows Camera" |
+| Chrome (webcamtests.com) | Detected as `chrome`; the page restarts the stream several times (hence the off grace). `Process.MainModule` is access-denied for this process - use `QueryFullProcessImageName` |
+| Zoom (Settings -> Video preview) | Clean on/off, `C:\Program Files\Zoom\bin\Zoom.exe`, description "Zoom Meetings" |
+
+Rejected alternatives (keep for reference):
+- **CapabilityAccessManager registry keys** (`HKCU\...\CapabilityAccessManager\ConsentStore\webcam`, `LastUsedTimeStart`/`LastUsedTimeStop`): **do not record webcam use on this build** - nothing was written for any of the three apps, though other capabilities (location, passkeys) still get timestamps. Prototype: `windows/RegistryProbe/`.
+- **FrameServer event log** (`Microsoft-Windows-MF-FrameServer/Camera_FrameServer`): no app identity, and it **missed the Zoom session entirely**.
 
 **Tray:** `NotifyIcon` + `ContextMenuStrip`. Windows has no overlay-subview equivalent, so draw the red dot into the tray icon bitmap (swap between a plain and a dotted icon at 16x16 and 32x32 for HiDPI). Single-instance guard via a named `Mutex`.
 
@@ -103,6 +110,14 @@ Every field is optional; missing fields use the defaults shown. A malformed file
 - Don't delete the user's files without asking.
 - Keep docs (README / INSTALL / CHANGELOG) updated with each user-visible change, and keep the macOS app working.
 - Work on a dedicated branch (e.g. `windows`) created from `gui-menubar-app` (or `main` once that is merged), and let the user commit/push.
+
+## Progress (2026-10-12)
+
+Steps 1-6 below are done; the app is in `windows/` and documented in `windows/README.md`. Installer built and silently install-tested on the NUC. Still to do:
+- Test the relay end to end once the relay box is back on the LAN (`onair.local` didn't resolve from the NUC - may need its IP in config).
+- Have the user exercise Preferences (validation, ignore list, Start at Login) and Inactivate by hand.
+- Decide whether to delete the `SensorProbe/` and `RegistryProbe/` prototypes.
+- Code signing (optional).
 
 ## Suggested first steps
 
