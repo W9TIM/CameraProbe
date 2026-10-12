@@ -4,6 +4,8 @@ A macOS menu bar utility that watches for camera activity and reacts to it: flip
 
 Ships as a normal `.app` you drag into `/Applications` - no installer, no `sudo`, no LaunchAgent. It lives in the menu bar with a custom tally-light icon, shows a red dot on top of it whenever the camera is actively in use, and everything is configured from a Preferences window.
 
+> **Windows:** a Windows 10/11 tray version (0.1.0 preview) lives in [`windows/`](windows/README.md). It uses the same relay firmware, Home Assistant webhooks and config schema. The rest of this README covers the macOS app.
+
 ## Features
 
 - Detects camera start/stop by watching the unified log stream for `cameracaptured` events - no polling, no private APIs.
@@ -176,6 +178,8 @@ CameraProbe calls two built-in Home Assistant webhooks (`camera_on` / `camera_of
 | `config.example.json` | Copyable config template |
 | `firmware/` | ESP8266 relay sketch, wiring docs, WiFi credentials template |
 | `homeassistant/` | Home Assistant automation setup docs and example YAML |
+| `windows/` | The Windows tray app (C#/.NET 8) - see [`windows/README.md`](windows/README.md) |
+| `WINDOWS_PORT.md` | Windows port plan and camera-detection test findings |
 | `install.sh`, `uninstall.sh`, `com.tim.cameraprobe.plist.template` | Legacy LaunchAgent installer - superseded by `build-app.sh`, kept for reference |
 | `README.md`, `INSTALL.md`, `CHANGELOG.md`, `LICENSE` | Project docs |
 

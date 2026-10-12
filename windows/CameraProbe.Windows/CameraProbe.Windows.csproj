@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>CameraProbe</AssemblyName>
+    <RootNamespace>CameraProbe</RootNamespace>
+    <Product>CameraProbe</Product>
+    <Description>CameraProbe</Description>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\*.ico" LogicalName="%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\..\Resources\AppIcon.iconset\icon_256x256.png" LogicalName="AppIcon256.png" />
+  </ItemGroup>
+
+</Project>

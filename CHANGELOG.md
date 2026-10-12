@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Added
+
+- **Windows version (0.1.0 preview)** in `windows/` - a C#/.NET 8 tray app with the same behavior as the macOS app: relay + Home Assistant notifications, tray icon with a red tally light while the camera is in use, Inactivate/Reactivate, Preferences window, Start at Login, splash screen, and the `--test`/`--status`/`--version`/`--help` CLI. Same config schema, at `%APPDATA%\CameraProbe\config.json`. Per-user Inno Setup installer (`windows\build-installer.ps1`). See `windows/README.md`.
+- Windows-specific behavior: the app using the camera is identified directly (no 3-second frontmost-app delay); the camera only counts as off after staying off for 2 seconds, so browsers restarting the stream don't flicker the relay; and quitting or signing out during a session sends the matching "off" first.
+
 ## [2.0.0] - 2026-09-19
 
 ### Added

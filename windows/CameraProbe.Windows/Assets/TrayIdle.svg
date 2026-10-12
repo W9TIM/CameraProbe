@@ -1,0 +1,13 @@
+<!-- Tray icon, camera idle: the lens ring + tally light from Resources/AppIcon.svg,
+     cropped and thickened so it reads at 16px. Tally light unlit (grey). -->
+<svg width="256" height="256" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3a3f47"/>
+      <stop offset="100%" stop-color="#1b1d21"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="96" height="96" rx="22" ry="22" fill="url(#bg)"/>
+  <circle cx="50" cy="50" r="36" fill="none" stroke="#8b95a3" stroke-width="8"/>
+  <circle cx="50" cy="50" r="24" fill="#5a616c"/>
+</svg>

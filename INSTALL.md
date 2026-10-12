@@ -1,5 +1,7 @@
 # Installing CameraProbe
 
+> This guide is for the macOS app. For Windows, see [`windows/README.md`](windows/README.md#install).
+
 ## Upgrading from the old LaunchAgent-based install
 
 If you previously installed CameraProbe via `./install.sh`, remove that first so the old LaunchAgent-run copy and the new menu bar app don't both try to run at once:

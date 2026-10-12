@@ -1,0 +1,18 @@
+<!-- Tray icon, camera in use: same as TrayIdle.svg with the tally light lit,
+     using the glow colours from Resources/AppIcon.svg. This is the "red dot". -->
+<svg width="256" height="256" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3a3f47"/>
+      <stop offset="100%" stop-color="#1b1d21"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="42%" r="65%">
+      <stop offset="0%" stop-color="#ff8080"/>
+      <stop offset="55%" stop-color="#ff3b3b"/>
+      <stop offset="100%" stop-color="#a8121f"/>
+    </radialGradient>
+  </defs>
+  <rect x="2" y="2" width="96" height="96" rx="22" ry="22" fill="url(#bg)"/>
+  <circle cx="50" cy="50" r="36" fill="none" stroke="#8b95a3" stroke-width="8"/>
+  <circle cx="50" cy="50" r="27" fill="url(#glow)"/>
+</svg>
