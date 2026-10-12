@@ -1,13 +1,9 @@
 import Foundation
 
 // MARK: - Identity
-//
-// Shared with the LaunchAgent label used by install.sh/uninstall.sh and
-// the OSLog subsystem in Logger.swift, so there's one source of truth
-// instead of the same string typed in three places.
 
 let cameraProbeLabel = "com.tim.cameraprobe"
-let appVersion = "1.1.0"
+let appVersion = "2.0.0"
 
 // MARK: - Configuration file schema
 //
@@ -28,13 +24,11 @@ let appVersion = "1.1.0"
 // }
 //
 // Every field is optional in the file itself - anything omitted falls
-// back to the same defaults CameraProbe shipped with before this file
-// existed, so a partial config.json (e.g. just overriding relay.host)
-// is valid. ignoredApplications defaults to empty, so out of the box
-// every app that activates the camera still triggers a notification -
-// it's opt-in per app, not a behavior change.
+// back to a default, so a partial config.json (e.g. just overriding
+// relay.host) is valid. Codable (not just Decodable) so the Preferences
+// window can write changes back out, not just read them.
 
-struct RelayConfig: Decodable {
+struct RelayConfig: Codable {
     var enabled: Bool
     var host: String
     var port: Int
@@ -57,7 +51,7 @@ struct RelayConfig: Decodable {
     }
 }
 
-struct HomeAssistantConfig: Decodable {
+struct HomeAssistantConfig: Codable {
     var enabled: Bool
     var host: String
     var port: Int
@@ -80,7 +74,7 @@ struct HomeAssistantConfig: Decodable {
     }
 }
 
-struct AppConfig: Decodable {
+struct AppConfig: Codable {
     var relay: RelayConfig
     var homeAssistant: HomeAssistantConfig
     var ignoredApplications: [String]
@@ -107,54 +101,103 @@ struct AppConfig: Decodable {
     }
 }
 
-// MARK: - Loading
+// MARK: - Config file location
+//
+// Per-user (~/Library/Application Support), not system-wide
+// (/Library/Application Support) - this is a GUI app the user configures
+// themselves via the Preferences window, so it reads/writes its own
+// config with no sudo/admin prompt ever required.
 
-let configFilePath = "/Library/Application Support/CameraProbe/config.json"
+let configFilePath: String = {
+    FileManager.default
+        .homeDirectoryForCurrentUser
+        .appendingPathComponent("Library/Application Support/CameraProbe/config.json")
+        .path
+}()
 
-func loadConfiguration() -> AppConfig {
-    guard FileManager.default.fileExists(atPath: configFilePath) else {
-        print("No config file at \(configFilePath); using built-in defaults")
-        return AppConfig()
+// MARK: - Config Store
+//
+// Holds the current config in memory behind a lock, so the Preferences
+// window can update it and have every part of the app (Relay.swift,
+// HomeAssistant.swift, CameraMonitor.swift, etc.) see the new values
+// immediately, without an app restart. Everything else in the codebase
+// still just reads the plain global names below (relayHost, relayPort,
+// ...) - those are now computed properties backed by this store instead
+// of one-time-loaded constants, so no call site needed to change.
+
+final class ConfigStore: @unchecked Sendable {
+    static let shared = ConfigStore()
+
+    private let lock = NSLock()
+    private var _config: AppConfig
+
+    private init() {
+        _config = ConfigStore.loadFromDisk()
     }
 
-    do {
-        let data = try Data(contentsOf: URL(fileURLWithPath: configFilePath))
-        let config = try JSONDecoder().decode(AppConfig.self, from: data)
-        print("Loaded configuration from \(configFilePath)")
-        return config
-    } catch {
-        // A bad config file should never take the monitor down - fall back
-        // to defaults and make the failure loud instead.
-        print("Warning: failed to parse \(configFilePath): \(error.localizedDescription). Using built-in defaults.")
-        logger.error("Failed to parse \(configFilePath, privacy: .public): \(error.localizedDescription, privacy: .public)")
-        return AppConfig()
+    var config: AppConfig {
+        lock.lock(); defer { lock.unlock() }
+        return _config
+    }
+
+    /// Writes `newConfig` to disk and, only on success, updates the
+    /// in-memory config that the rest of the app reads from.
+    func save(_ newConfig: AppConfig) throws {
+        let directory = (configFilePath as NSString).deletingLastPathComponent
+        try FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: true)
+
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted]
+        let data = try encoder.encode(newConfig)
+        try data.write(to: URL(fileURLWithPath: configFilePath), options: .atomic)
+
+        lock.lock()
+        _config = newConfig
+        lock.unlock()
+
+        print("Saved configuration to \(configFilePath)")
+        logger.info("Configuration updated from Preferences and saved to \(configFilePath, privacy: .public)")
+    }
+
+    private static func loadFromDisk() -> AppConfig {
+        guard FileManager.default.fileExists(atPath: configFilePath) else {
+            print("No config file at \(configFilePath); using built-in defaults")
+            return AppConfig()
+        }
+
+        do {
+            let data = try Data(contentsOf: URL(fileURLWithPath: configFilePath))
+            let config = try JSONDecoder().decode(AppConfig.self, from: data)
+            print("Loaded configuration from \(configFilePath)")
+            return config
+        } catch {
+            // A bad config file should never take the monitor down - fall back
+            // to defaults and make the failure loud instead.
+            print("Warning: failed to parse \(configFilePath): \(error.localizedDescription). Using built-in defaults.")
+            return AppConfig()
+        }
     }
 }
 
-let appConfig = loadConfiguration()
-
 // MARK: - Flattened accessors
 //
-// Everything else in the codebase (Relay.swift, HomeAssistant.swift,
-// Logger.swift, main.swift) references these same names, so switching
-// from hardcoded constants to a config file didn't require touching
-// any other file.
+// Computed, not stored, so they always reflect whatever is currently in
+// ConfigStore - including right after a Preferences window save.
 
-let relayHost = appConfig.relay.host
-let relayPort = appConfig.relay.port
-let enableRelay = appConfig.relay.enabled
+var relayHost: String { ConfigStore.shared.config.relay.host }
+var relayPort: Int { ConfigStore.shared.config.relay.port }
+var enableRelay: Bool { ConfigStore.shared.config.relay.enabled }
 
-let homeAssistantHost = appConfig.homeAssistant.host
-let homeAssistantPort = appConfig.homeAssistant.port
-let enableHomeAssistant = appConfig.homeAssistant.enabled
+var homeAssistantHost: String { ConfigStore.shared.config.homeAssistant.host }
+var homeAssistantPort: Int { ConfigStore.shared.config.homeAssistant.port }
+var enableHomeAssistant: Bool { ConfigStore.shared.config.homeAssistant.enabled }
 
 // Apps in this list are still detected internally (camera state tracking
 // keeps working correctly for whatever runs next), but never trigger a
 // relay/Home Assistant notification - useful for privacy (e.g. Photo
 // Booth) or gameplay capture apps you don't want broadcasting "on air".
-// Matching is case-insensitive. Empty by default, so out of the box
-// every app still notifies, same as before this config existed.
-let ignoredApplications = appConfig.ignoredApplications
+// Matching is case-insensitive.
+var ignoredApplications: [String] { ConfigStore.shared.config.ignoredApplications }
 
 func isApplicationIgnored(_ application: String) -> Bool {
     ignoredApplications.contains { $0.caseInsensitiveCompare(application) == .orderedSame }

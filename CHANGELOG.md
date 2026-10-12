@@ -4,6 +4,29 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.0.0] - 2026-09-19
+
+### Added
+
+- Rewritten as a menu bar app (AppKit): a custom tally-light status icon with a right-click menu for About, Preferences, Inactivate/Reactivate, and Quit. A brief splash screen (showing the same icon) appears on launch.
+- **Custom app icon** - a tally-light design (camera lens, glowing red indicator, "ON AIR" badge). Source lives in `Resources/AppIcon.svg`/`Resources/AppIcon.iconset/`; `build-app.sh` compiles it into `AppIcon.icns` via `iconutil` and embeds it in the app bundle, and also sets it as `dist/CameraProbe.dmg`'s volume icon.
+- **Menu bar activity dot** - a red circle overlaid directly on the camera icon (not appended text) that lights up the instant CameraProbe detects the camera in use by an application not in `ignoredApplications`, and goes dark the instant it's released or Inactivate is switched on. It's driven entirely by CameraProbe's own local detection - independent of the relay and Home Assistant, and unaffected by whether those integrations are enabled, configured, or reachable.
+- **Preferences window** - edit relay enabled/host/port, Home Assistant enabled/host/port, ignored applications, and Start at Login from a dialog instead of hand-editing `config.json`. Saving applies changes immediately, no restart.
+- **Inactivate/Reactivate** - pauses relay and Home Assistant notifications from the menu bar without quitting the app; camera detection keeps running underneath.
+- **Start at Login**, via `ServiceManagement`/`SMAppService` - replaces the LaunchAgent. Toggled from Preferences.
+- `build-app.sh` - assembles a proper `CameraProbe.app` bundle (with `Info.plist`) and a `CameraProbe.dmg`, code-signed with a stable identifier. Install is now drag-`CameraProbe.app`-to-`/Applications`; uninstall is drag-to-Trash. No `sudo`, no installer script, no LaunchAgent.
+- Config file moved to a per-user path, `~/Library/Application Support/CameraProbe/config.json` (previously system-wide under `/Library/Application Support/`), so both reading and writing it never require elevated privileges.
+- CLI flags (`--test`, `--status`, `--version`, `--help`) are preserved for scripting/troubleshooting from Terminal even though this is now a GUI app.
+
+### Changed
+
+- `--test`/`--status` now report Start at Login status and whether CameraProbe is currently running, instead of querying LaunchAgent state via `launchctl`.
+
+### Migration notes
+
+- Existing installs using the old LaunchAgent should remove it first - see the note at the top of `INSTALL.md`.
+- `install.sh`, `uninstall.sh`, and `com.tim.cameraprobe.plist.template` are superseded by `build-app.sh` and kept only for reference during the transition.
+
 ## [1.1.0] - 2026-07-30
 
 ### Added

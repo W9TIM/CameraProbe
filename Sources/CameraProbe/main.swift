@@ -1,10 +1,12 @@
+import AppKit
 import Foundation
 
 // MARK: - Command-line flags
 //
-// --test/--status/--version/--help all exit immediately without starting
-// the monitor - they're one-off diagnostic invocations, not the
-// long-running process the LaunchAgent keeps alive.
+// Kept even though this is now a GUI app - handy for scripting/
+// diagnostics from Terminal without needing the menu bar UI at all.
+// --test/--status/--version/--help all exit immediately without
+// launching the app.
 
 let cliArguments = Set(CommandLine.arguments.dropFirst())
 
@@ -27,35 +29,16 @@ if cliArguments.contains("--test") {
     exit(runSelfTest() ? 0 : 1)
 }
 
-printStartupBanner()
+// MARK: - Launch the menu bar app
+//
+// .accessory hides the Dock icon and app-menu bar (the CLI equivalent
+// of Info.plist's LSUIElement=true) - this only ever shows up as a menu
+// bar item, never in the Dock or Cmd+Tab switcher.
 
-// Sanity-check both hostnames resolve before we start relying on them.
-// (Wires up the DNS check that existed in the original file but was
-// never actually called.)
-testDNS(relayHost)
-testDNS(homeAssistantHost)
+let app = NSApplication.shared
+app.setActivationPolicy(.accessory)
 
-// Handle SIGINT/SIGTERM so the log-stream subprocess is terminated
-// cleanly instead of being left as an orphan when this process exits
-// (relevant once this runs under launchd, which sends SIGTERM on unload).
-signal(SIGINT, SIG_IGN)
-let sigintSource = DispatchSource.makeSignalSource(signal: SIGINT, queue: .main)
-sigintSource.setEventHandler {
-    logger.info("Received SIGINT, shutting down...")
-    cameraMonitor.stop()
-    exit(0)
-}
-sigintSource.resume()
+let appDelegate = AppDelegate()
+app.delegate = appDelegate
 
-signal(SIGTERM, SIG_IGN)
-let sigtermSource = DispatchSource.makeSignalSource(signal: SIGTERM, queue: .main)
-sigtermSource.setEventHandler {
-    logger.info("Received SIGTERM, shutting down...")
-    cameraMonitor.stop()
-    exit(0)
-}
-sigtermSource.resume()
-
-startCameraMonitor()
-
-RunLoop.main.run()
+app.run()

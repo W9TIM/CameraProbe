@@ -1,8 +1,8 @@
 # CameraProbe
 
-A macOS background utility that watches for camera activity and reacts to it: flips a physical "on air" relay, and/or fires a Home Assistant webhook, whenever your Mac's camera turns on or off.
+A macOS menu bar utility that watches for camera activity and reacts to it: flips a physical "on air" relay, and/or fires a Home Assistant webhook, whenever your Mac's camera turns on or off.
 
-Runs as a LaunchAgent, so it starts automatically at login and stays out of the way.
+Ships as a normal `.app` you drag into `/Applications` - no installer, no `sudo`, no LaunchAgent. It lives in the menu bar with a custom tally-light icon, shows a red dot on top of it whenever the camera is actively in use, and everything is configured from a Preferences window.
 
 ## Features
 
@@ -10,36 +10,48 @@ Runs as a LaunchAgent, so it starts automatically at login and stays out of the 
 - Reports which application grabbed the camera (Zoom, FaceTime, Photo Booth, Teams, browsers, etc.).
 - Controls an HTTP-controlled relay (e.g. an ESP8266/ESP32 running Tasmota or custom firmware) for a physical "on air" light.
 - Fires Home Assistant webhooks (`camera_on` / `camera_off`) so you can build automations on top of camera state.
-- Configuration lives in a JSON file, not compiled-in constants - change a hostname without rebuilding.
+- Menu bar icon shows a red dot the instant CameraProbe itself detects the camera in use by a non-excluded app - a local, independent signal that doesn't depend on the relay or Home Assistant being enabled, configured, or reachable. Goes dark while Inactivate is on.
+- Right-click menu: About, Preferences, Inactivate/Reactivate (pause relay + Home Assistant notifications without quitting - camera detection keeps running), Quit.
+- Preferences window for relay, Home Assistant, ignored apps, and Start at Login - no manual config-file editing required. Changes apply immediately, no restart.
+- `ignoredApplications` exclude list - apps that activate the camera without ever notifying the relay/Home Assistant (privacy, gameplay capture, etc.), editable from Preferences.
 - Self-healing: if the underlying log-stream process dies, it restarts automatically with backoff.
-- `CameraProbe --test` and `CameraProbe --status` for quick diagnostics.
+- `CameraProbe --test` and `CameraProbe --status` for command-line diagnostics.
 
 ## Requirements
 
 - macOS 14 or later.
-- Xcode Command Line Tools (for `swift build`): `xcode-select --install`.
-- An HTTP-controlled relay reachable on your LAN (optional - can be disabled in config).
-- A Home Assistant instance with webhook automations for `camera_on` / `camera_off` (optional - can be disabled in config).
+- Xcode Command Line Tools (to build from source): `xcode-select --install`.
+- An HTTP-controlled relay reachable on your LAN (optional - can be disabled in Preferences).
+- A Home Assistant instance with webhook automations for `camera_on` / `camera_off` (optional - can be disabled in Preferences).
 
 ## Install
 
 ```
 git clone <this repository>
 cd CameraProbe
-./install.sh
+./build-app.sh
 ```
 
-Run it as your normal user, **not** with `sudo` - it prompts for your password only for the specific steps that need elevated access (installing to `/Applications`, writing the system-wide config).
+This builds the release binary and assembles `dist/CameraProbe.app` (plus `dist/CameraProbe.dmg`). No `sudo` at any point.
 
-On first install it'll ask for your relay and Home Assistant hostnames (defaults shown in brackets, just press Return to accept). It then builds the release binary, installs it, creates the LaunchAgent, and runs a connectivity check.
+Then either:
 
-The first time the installed binary talks to the network, macOS will show a **Local Network** permission prompt - click Allow. The binary is code-signed with a stable identifier during install specifically so this approval survives future reinstalls after code changes.
+- Open `dist/CameraProbe.dmg` and drag **CameraProbe** onto the **Applications** shortcut, or
+- Drag `dist/CameraProbe.app` straight into `/Applications` in Finder.
+
+**First launch:** the app isn't notarized by Apple, so right-click `CameraProbe.app` in `/Applications` and choose **Open**, then confirm - after that first approval, opening it normally (double-click, Spotlight, login item) works fine.
+
+A brief splash screen (showing the app's own tally-light icon) appears, then CameraProbe settles into the menu bar (look for the tally-light icon near the clock - no Dock icon, this is a background utility). The first time it talks to the network, macOS shows a **Local Network** permission prompt - click **Allow**. `build-app.sh` code-signs the app with a stable identifier specifically so this approval survives future rebuilds.
+
+Open the menu bar icon → **Preferences…** to set your relay and Home Assistant hostnames, and optionally turn on **Start at Login**.
 
 See [INSTALL.md](INSTALL.md) for a more detailed walkthrough and troubleshooting.
 
 ## Configuration
 
-`/Library/Application Support/CameraProbe/config.json`:
+Preferences window (menu bar icon → **Preferences…**) is the normal way to change settings - relay enabled/host/port, Home Assistant enabled/host/port, ignored applications, and Start at Login. Saving writes to disk and takes effect immediately, no restart needed.
+
+Under the hood, this is stored at `~/Library/Application Support/CameraProbe/config.json`:
 
 ```json
 {
@@ -57,9 +69,9 @@ See [INSTALL.md](INSTALL.md) for a more detailed walkthrough and troubleshooting
 }
 ```
 
-Every field is optional - anything you omit falls back to the default shown above. Edit this file and restart CameraProbe (`launchctl kickstart -k gui/$(id -u)/com.tim.cameraprobe`) to pick up changes; no rebuild needed. A malformed config file is logged as a warning and CameraProbe falls back to defaults rather than failing to start.
+Every field is optional - anything you omit falls back to the default shown above. You can hand-edit this file directly if you prefer (per-user path, no `sudo` needed); CameraProbe doesn't watch it for external changes, though, so use Preferences if the app is already running. A malformed config file is logged as a warning and CameraProbe falls back to defaults rather than failing to start.
 
-**`ignoredApplications`** is an exclude list: every app that activates the camera still triggers a notification by default (empty list, same as before this existed), but you can name specific apps to skip - for privacy (e.g. Photo Booth) or gameplay capture you don't want broadcasting "on air":
+**`ignoredApplications`** is an exclude list: every app that activates the camera still triggers a notification by default (empty list), but you can name specific apps to skip - for privacy (e.g. Photo Booth) or gameplay capture you don't want broadcasting "on air". Add them one per line in Preferences, or as a JSON array:
 
 ```json
 "ignoredApplications": ["Photo Booth", "OBS"]
@@ -71,12 +83,12 @@ See `config.example.json` for a copyable template.
 
 ## Usage
 
-CameraProbe normally runs unattended under the LaunchAgent, but the binary supports a few commands directly:
+CameraProbe normally just runs in the menu bar, but the same binary supports a few commands directly from Terminal (handy for scripting/troubleshooting):
 
 ```
-CameraProbe                Start monitoring (this is what the LaunchAgent runs)
-CameraProbe --status       One-shot summary: relay, Home Assistant, LaunchAgent, camera monitor
-CameraProbe --test         Full diagnostics: DNS, relay, Home Assistant, log access, LaunchAgent
+CameraProbe                Launch the menu bar app (splash screen, then runs in the menu bar)
+CameraProbe --status       One-shot summary: relay, Home Assistant, Start at Login, camera monitor
+CameraProbe --test         Full diagnostics: DNS, relay, Home Assistant, log access, Start at Login
 CameraProbe --version      Print the version
 CameraProbe --help         Show usage
 ```
@@ -84,11 +96,11 @@ CameraProbe --help         Show usage
 Example `--status` output:
 
 ```
-CameraProbe 1.0.0
+CameraProbe 2.0.0
 
 Relay...............OK
 Home Assistant......OK
-LaunchAgent.........Loaded
+Start at Login......Enabled
 Camera Monitor......Running
 ```
 
@@ -100,19 +112,25 @@ log stream --predicate 'subsystem == "com.tim.cameraprobe"'
 
 ## Uninstall
 
+Turn off **Start at Login** in Preferences first (if you'd enabled it), then quit CameraProbe from the menu bar and drag `CameraProbe.app` from `/Applications` to the Trash. That's it - no installer to run in reverse.
+
+To also remove your saved settings:
+
 ```
-./uninstall.sh
+rm -rf ~/Library/Application\ Support/CameraProbe
 ```
 
-Stops and removes the LaunchAgent and the installed app, and asks before removing your configuration file.
+If you're upgrading from the older LaunchAgent-based install, see the note at the top of [INSTALL.md](INSTALL.md) for how to remove that first.
 
 ## How it works
 
-CameraProbe shells out to `/usr/bin/log stream` with a predicate that matches `cameracaptured`'s `DidStartRunning`/`DidStopRunning` events - the same signal macOS's own camera indicator light relies on. When the camera turns on, it waits briefly (to let the capturing app become frontmost), asks `NSWorkspace` which application is active, then notifies the relay and Home Assistant. When it turns off, both get an "off" notification immediately.
+CameraProbe shells out to `/usr/bin/log stream` with a predicate that matches `cameracaptured`'s `DidStartRunning`/`DidStopRunning` events - the same signal macOS's own camera indicator light relies on. When the camera turns on, it waits briefly (to let the capturing app become frontmost), asks `NSWorkspace` which application is active, then notifies the relay and Home Assistant (unless the app is in `ignoredApplications`, or Inactivate is on). When it turns off, both get an "off" notification immediately.
+
+The menu bar's red dot is driven by that same local detection, independently of whether the relay/Home Assistant notifications actually went out: it lights up the instant a non-excluded app grabs the camera, and goes dark the instant the camera is released or Inactivate is toggled on. It never polls or depends on the relay or Home Assistant being enabled, configured, or reachable - it's purely "does CameraProbe itself currently consider the camera in use."
 
 ## Relay firmware
 
-The `firmware/` folder has the ESP8266 sketch (Wemos D1 Mini) that runs the physical relay CameraProbe talks to by default - see [firmware/README.md](firmware/README.md) for wiring, Arduino IDE setup, and flashing instructions. If you already have relay hardware exposing `GET /on` / `GET /off`, you don't need it; just point `relay.host` in `config.json` at your existing device.
+The `firmware/` folder has the ESP8266 sketch (Wemos D1 Mini) that runs the physical relay CameraProbe talks to by default - see [firmware/README.md](firmware/README.md) for wiring, Arduino IDE setup, and flashing instructions. If you already have relay hardware exposing `GET /on` / `GET /off` / `GET /status`, you don't need it; just point the relay host in Preferences (or `config.json`) at your existing device.
 
 The low voltage relay is used for controlling power to a 5V (USB) light (On/Off) via WiFi. The control unit is constructed with a Wemos D1 Mini (ESP8266) with a single relay shield attached.
 
@@ -126,44 +144,63 @@ CameraProbe calls two built-in Home Assistant webhooks (`camera_on` / `camera_of
 
 ## Project layout
 
-```
-CameraProbe/
-├── Package.swift
-├── Sources/CameraProbe/
-│   ├── main.swift              Entry point: CLI flag parsing, startup, signal handling
-│   ├── Configuration.swift     Config file schema, loading, shared constants
-│   ├── Logger.swift            OSLog setup, startup banner
-│   ├── CameraMonitor.swift     Camera state + log-stream subprocess management
-│   ├── Relay.swift             Relay HTTP calls
-│   ├── HomeAssistant.swift     Home Assistant webhook calls
-│   ├── ActiveApplication.swift Frontmost-app lookup
-│   ├── Diagnostics.swift       --test / --status / --help implementation
-│   └── Utilities.swift         DNS check
-├── firmware/
-│   ├── README.md                          Wiring, Arduino IDE setup, flashing
-│   └── CameraProbeRelay/
-│       ├── CameraProbeRelay.ino            ESP8266 relay controller sketch
-│       └── secrets.h.example               WiFi credentials template (copy to secrets.h)
-├── homeassistant/
-│   ├── README.md                           UI + YAML setup instructions
-│   └── automations.example.yaml            Copyable automation definitions
-├── install.sh
-├── uninstall.sh
-├── com.tim.cameraprobe.plist.template
-├── config.example.json
-├── README.md
-├── INSTALL.md
-├── CHANGELOG.md
-└── LICENSE
-```
+**Sources/CameraProbe/**
+
+| File | Purpose |
+|---|---|
+| `main.swift` | Entry point: CLI flag parsing, launches the menu bar app |
+| `AppDelegate.swift` | App lifecycle: splash screen, signal handling, startup |
+| `StatusBarController.swift` | Menu bar icon, right-click menu, camera-activity dot overlay |
+| `SettingsWindowController.swift` | Preferences window |
+| `SplashWindowController.swift` | Brief launch splash screen (shows the app icon) |
+| `RelayStatusPoller.swift` | Not currently used by the menu bar dot (see CameraMonitor.swift's CameraActivityIndicator) - kept for possible future relay-reachability diagnostics |
+| `PauseState.swift` | Inactivate/Reactivate state |
+| `LoginItem.swift` | Start at Login (`SMAppService`) |
+| `Configuration.swift` | Config schema, per-user config file, live `ConfigStore` |
+| `Logger.swift` | OSLog setup, startup banner |
+| `CameraMonitor.swift` | Camera state + log-stream subprocess management |
+| `Relay.swift` | Relay HTTP calls |
+| `HomeAssistant.swift` | Home Assistant webhook calls |
+| `ActiveApplication.swift` | Frontmost-app lookup |
+| `Diagnostics.swift` | `--test` / `--status` / `--help` implementation |
+| `Utilities.swift` | DNS check |
+
+**Other top-level files and folders**
+
+| Path | Purpose |
+|---|---|
+| `Package.swift` | Swift package manifest |
+| `build-app.sh` | Builds `dist/CameraProbe.app` and `dist/CameraProbe.dmg` |
+| `Info.plist.template` | App bundle metadata used by `build-app.sh` |
+| `Resources/AppIcon.svg`, `Resources/AppIcon.iconset/` | App icon source and compiled sizes - see "App icon" below |
+| `config.example.json` | Copyable config template |
+| `firmware/` | ESP8266 relay sketch, wiring docs, WiFi credentials template |
+| `homeassistant/` | Home Assistant automation setup docs and example YAML |
+| `install.sh`, `uninstall.sh`, `com.tim.cameraprobe.plist.template` | Legacy LaunchAgent installer - superseded by `build-app.sh`, kept for reference |
+| `README.md`, `INSTALL.md`, `CHANGELOG.md`, `LICENSE` | Project docs |
+
+## App icon
+
+The icon is a custom "tally light" design - a camera lens with a glowing red indicator and an ON AIR badge, matching the menu bar's own activity dot visually. Source files live under `Resources/`:
+
+- `Resources/AppIcon.svg` - the editable vector source.
+- `Resources/AppIcon.iconset/` - the 10 PNG sizes Apple requires, generated from the SVG.
+
+`build-app.sh` compiles the iconset into `AppIcon.icns` via `iconutil` (bundled with Xcode) and embeds it in `CameraProbe.app/Contents/Resources/`, referenced from `Info.plist.template`'s `CFBundleIconFile`. It also stamps the same icon onto `dist/CameraProbe.dmg` as the disk image's own volume icon (via `SetFile`, skipped with a warning if that tool isn't installed - the app's icon isn't affected either way). The splash screen shown at launch displays this same icon (`NSApp.applicationIconImage`), falling back to a generic system icon only when running unbundled (e.g. `swift run` during development, before Info.plist's icon applies).
+
+To change the artwork: edit or regenerate `Resources/AppIcon.svg`, re-render it to the 10 PNG sizes listed in `Resources/AppIcon.iconset/`, and run `./build-app.sh` again - no other changes needed.
 
 ## Troubleshooting
 
-**"UNREACHABLE" during install, but the app works fine once running.** `.local` mDNS hostnames can be slow on a cold lookup, and `curl` doesn't race IPv4/IPv6 the way `URLSession` does. The install script warms the resolver and forces IPv4 before checking, but a genuinely flaky network can still produce a false negative here - run `CameraProbe --test` afterward to double check.
+**macOS says the app "can't be opened because it is from an unidentified developer."** Right-click (not double-click) `CameraProbe.app` in `/Applications` and choose **Open**, then confirm in the dialog. This is only needed once - it's Gatekeeper reacting to an ad-hoc-signed, non-notarized app, not a sign of a broken build.
 
-**Local Network permission dialog reappears after a rebuild.** This means the binary's signature changed. `install.sh` re-signs it with a fixed identifier each time specifically to prevent this - make sure you're reinstalling via `./install.sh` rather than copying the binary manually.
+**Local Network permission dialog reappears after a rebuild.** This means the app's signature changed. `build-app.sh` re-signs it with a fixed identifier each time specifically to prevent this - make sure you're rebuilding via `./build-app.sh` rather than copying the binary manually.
 
-**Nothing happens when the camera turns on.** Run `CameraProbe --test` to check each subsystem individually, and `log stream --predicate 'subsystem == "com.tim.cameraprobe"'` to watch live logs while triggering the camera (e.g. open Photo Booth).
+**Preferences changes don't seem to apply.** They take effect immediately in the running app - no restart needed. If it still looks stale, confirm you clicked **Save** (not the titlebar close button), and check `~/Library/Application Support/CameraProbe/config.json`'s contents directly.
+
+**Nothing happens when the camera turns on.** Run `CameraProbe --test` (from Terminal: `/Applications/CameraProbe.app/Contents/MacOS/CameraProbe --test`) to check each subsystem individually, and `log stream --predicate 'subsystem == "com.tim.cameraprobe"'` to watch live logs while triggering the camera (e.g. open Photo Booth). Also check the menu bar icon isn't showing "Inactivate" as reversed to "Reactivate" (meaning notifications are currently paused).
+
+**Upgrading from the old LaunchAgent-based install.** See the note at the top of [INSTALL.md](INSTALL.md) - remove the LaunchAgent first to avoid two copies of CameraProbe running at once.
 
 ## License
 

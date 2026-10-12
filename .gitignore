@@ -2,12 +2,15 @@
 .build/
 .swiftpm/
 
+# build-app.sh output (CameraProbe.app / .dmg) - rebuilt locally, not tracked
+dist/
+
 # macOS
 .DS_Store
 
 # In case a local config ever ends up in the project directory by
 # accident - the real one lives at
-# /Library/Application Support/CameraProbe/config.json, outside the repo.
+# ~/Library/Application Support/CameraProbe/config.json, outside the repo.
 config.json
 
 *.log

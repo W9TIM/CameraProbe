@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 
 // MARK: - Self-test and status
@@ -87,42 +88,38 @@ func checkLogStreamAccess() -> CheckResult {
     )
 }
 
-struct LaunchAgentStatus {
-    let installed: Bool
-    let running: Bool
+// MARK: - Login Item / running-instance checks
+//
+// Replaces the old LaunchAgent-based checks. There's no plist or launchd
+// label to query anymore - Login Item status comes straight from
+// SMAppService (see LoginItem.swift), and "is the monitor actually
+// running right now" comes from asking NSWorkspace whether another
+// instance of this same app bundle is already running. This diagnostic
+// code runs as a one-off CLI invocation (--test/--status) that exits
+// before ever calling NSApplication.run(), so it never registers itself
+// as a running application and can't self-match.
+
+struct LoginItemStatus {
+    let supported: Bool
+    let enabled: Bool
     let detail: String
 }
 
-func launchAgentStatus() -> LaunchAgentStatus {
-    let process = Process()
-    process.executableURL = URL(fileURLWithPath: "/bin/launchctl")
-    process.arguments = ["print", "gui/\(getuid())/\(cameraProbeLabel)"]
-
-    let outPipe = Pipe()
-    process.standardOutput = outPipe
-    process.standardError = Pipe()
-
-    do {
-        try process.run()
-    } catch {
-        return LaunchAgentStatus(installed: false, running: false, detail: "launchctl unavailable")
+func loginItemStatus() -> LoginItemStatus {
+    guard LoginItem.isSupported else {
+        return LoginItemStatus(supported: false, enabled: false, detail: "Not running from an installed .app")
     }
-
-    process.waitUntilExit()
-
-    guard process.terminationStatus == 0 else {
-        return LaunchAgentStatus(installed: false, running: false, detail: "Not installed")
-    }
-
-    let data = outPipe.fileHandleForReading.readDataToEndOfFile()
-    let output = String(data: data, encoding: .utf8) ?? ""
-    let running = output.contains("state = running")
-
-    return LaunchAgentStatus(
-        installed: true,
-        running: running,
-        detail: running ? "Loaded, running" : "Loaded, not running"
+    let enabled = LoginItem.isEnabled
+    return LoginItemStatus(
+        supported: true,
+        enabled: enabled,
+        detail: enabled ? "Enabled" : "Disabled"
     )
+}
+
+func isMonitorRunning() -> Bool {
+    guard let bundleID = Bundle.main.bundleIdentifier else { return false }
+    return NSWorkspace.shared.runningApplications.contains { $0.bundleIdentifier == bundleID }
 }
 
 // MARK: - --test
@@ -145,8 +142,12 @@ func runSelfTest() -> Bool {
 
     results.append(checkLogStreamAccess())
 
-    let launchAgent = launchAgentStatus()
-    results.append(CheckResult(label: "LaunchAgent", passed: launchAgent.installed, detail: launchAgent.detail))
+    let loginItem = loginItemStatus()
+    if loginItem.supported {
+        results.append(CheckResult(label: "Start at Login", passed: true, detail: loginItem.detail))
+    }
+
+    results.append(CheckResult(label: "CameraProbe running", passed: isMonitorRunning(), detail: nil))
 
     for result in results {
         let status = result.passed ? "OK" : "FAIL"
@@ -177,7 +178,7 @@ func printStatus() {
         ? checkHTTPReachable(label: "Home Assistant", host: homeAssistantHost, port: homeAssistantPort)
         : CheckResult(label: "Home Assistant", passed: true, detail: "disabled")
 
-    let launchAgent = launchAgentStatus()
+    let loginItem = loginItemStatus()
 
     func line(_ label: String, _ value: String) {
         print("\(padded(label, width: 20)) \(value)")
@@ -185,8 +186,8 @@ func printStatus() {
 
     line("Relay", relayResult.passed ? "OK" : "FAIL")
     line("Home Assistant", haResult.passed ? "OK" : "FAIL")
-    line("LaunchAgent", launchAgent.installed ? (launchAgent.running ? "Loaded" : "Loaded (not running)") : "Not installed")
-    line("Camera Monitor", launchAgent.running ? "Running" : "Not running")
+    line("Start at Login", loginItem.supported ? loginItem.detail : "N/A (not an installed .app)")
+    line("Camera Monitor", isMonitorRunning() ? "Running" : "Not running")
 }
 
 // MARK: - --help
@@ -196,10 +197,13 @@ func printUsage() {
     CameraProbe \(appVersion)
 
     Usage:
-      CameraProbe                Start monitoring (this is what the LaunchAgent runs)
-      CameraProbe --status       Show whether the installed LaunchAgent is running and reachable
-      CameraProbe --test         Run diagnostics: DNS, relay, Home Assistant, log access, LaunchAgent
+      CameraProbe                Launch the menu bar app (splash screen, then runs in the menu bar)
+      CameraProbe --status       Show whether CameraProbe is running and reachable
+      CameraProbe --test         Run diagnostics: DNS, relay, Home Assistant, log access, Login Item
       CameraProbe --version      Print the version
       CameraProbe --help         Show this message
+
+    Preferences (relay, Home Assistant, ignored apps, Start at Login) are
+    edited from the app's menu bar icon, not from the command line.
     """)
 }

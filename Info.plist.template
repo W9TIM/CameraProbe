@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleExecutable</key>
+    <string>CameraProbe</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>CFBundleIconName</key>
+    <string>AppIcon</string>
+    <key>CFBundleIdentifier</key>
+    <string>__LABEL__</string>
+    <key>CFBundleName</key>
+    <string>CameraProbe</string>
+    <key>CFBundleDisplayName</key>
+    <string>CameraProbe</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>__VERSION__</string>
+    <key>CFBundleVersion</key>
+    <string>__VERSION__</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
+
+    <!-- Menu-bar-only: no Dock icon, no app menu bar, doesn't appear in
+         Cmd+Tab. This is the app-bundle equivalent of the
+         NSApp.setActivationPolicy(.accessory) call in main.swift. -->
+    <key>LSUIElement</key>
+    <true/>
+
+    <!-- Relay and Home Assistant hosts are typically .local mDNS names,
+         which routes through macOS's Local Network privacy permission -
+         these two keys are what let the system show a proper permission
+         prompt (with this description text) instead of silently failing
+         local-network lookups. -->
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>CameraProbe uses your local network to reach the camera-status relay and Home Assistant.</string>
+    <key>NSBonjourServices</key>
+    <array>
+        <string>_http._tcp</string>
+    </array>
+
+    <key>NSHumanReadableCopyright</key>
+    <string>Copyright © 2026 Tim Smith.</string>
+</dict>
+</plist>
