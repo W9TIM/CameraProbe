@@ -97,7 +97,6 @@ Icons: the `.ico` files in `CameraProbe.Windows/Assets/` are committed. To regen
 | `CameraProbe.Cli/` | Console shim built as `CameraProbe.com` so shells wait for CLI output and exit codes. Its output folder is the complete app |
 | `installer/CameraProbe.iss` | Inno Setup script |
 | `build-installer.ps1`, `make-icons.ps1` | Installer and icon build scripts |
-| `SensorProbe/`, `RegistryProbe/` | Throwaway camera-detection prototypes from the port - see `WINDOWS_PORT.md` |
 
 Inside `CameraProbe.Windows/`:
 
