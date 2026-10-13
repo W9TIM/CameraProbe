@@ -111,12 +111,11 @@ Rejected alternatives (keep for reference):
 - Keep docs (README / INSTALL / CHANGELOG) updated with each user-visible change, and keep the macOS app working.
 - Work on a dedicated branch (e.g. `windows`) created from `gui-menubar-app` (or `main` once that is merged), and let the user commit/push.
 
-## Progress (2026-10-12)
+## Progress
 
-Steps 1-6 below are done; the app is in `windows/` and documented in `windows/README.md`. Installer built and silently install-tested on the NUC. Still to do:
+Steps 1-6 below are done; the app is in `windows/` and documented in `windows/README.md`. Previewed as 0.1.0 (2026-10-12), hand-tested by the user, then released as **2.0.0** (2026-10-13) to match macOS, with a proper About window. Still to do:
 - Test the relay end to end once the relay box is back on the LAN (`onair.local` didn't resolve from the NUC - may need its IP in config).
-- Have the user exercise Preferences (validation, ignore list, Start at Login) and Inactivate by hand.
-- Decide whether to delete the `SensorProbe/` and `RegistryProbe/` prototypes.
+- Decide whether to delete the `SensorProbe/` and `RegistryProbe/` prototypes (kept for now).
 - Code signing (optional).
 
 ## Suggested first steps
