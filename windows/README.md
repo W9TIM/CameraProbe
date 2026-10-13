@@ -48,7 +48,7 @@ Use **Preferences** from the tray menu. Settings are saved to `%APPDATA%\CameraP
 
 Every field is optional. A malformed file is logged and ignored (defaults are used) - it never stops the app starting.
 
-**`.local` names:** Windows 10/11 resolve mDNS names like `homeassistant.local`, but not every device answers reliably. If `CameraProbe --test` shows a DNS failure for a host, use its IP address instead (ideally a DHCP reservation on your router).
+**Use the relay's IP address, not `onair.local`.** Windows can resolve mDNS `.local` names, but slowly: on the test PC, looking up `onair.local` took about 2.5 seconds, so the light came on about 2.9 seconds after the camera. With the IP address it came on in 0.2 seconds. Put the relay's IP in **Preferences -> Relay -> Host**, and give the relay box a DHCP reservation on your router so the address never changes. The same applies to Home Assistant if `homeassistant.local` is slow or fails, though a delay there only affects your automations, not the light. `CameraProbe --test` shows each host's lookup result.
 
 ## Usage
 
@@ -120,4 +120,5 @@ Inside `CameraProbe.Windows/`:
 
 - **No red light when the camera is on:** check the log for `CAMERA ON`. If the app shows as `(ignored by config)`, remove it from ignored applications. If nothing is logged at all, run `CameraProbe --test` and check "Camera detection access".
 - **Relay or Home Assistant not switching:** run `CameraProbe --test`. A DNS failure means the `.local` name doesn't resolve - use the IP address. Each HTTP call and its status is in the log.
+- **Light comes on a few seconds late:** the relay host is probably a `.local` name. Use its IP address instead (see Configuration).
 - **"CameraProbe is already running":** only one copy runs at a time. Look in the notification area overflow (**^**).
