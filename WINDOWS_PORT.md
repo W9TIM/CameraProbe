@@ -76,7 +76,7 @@ Rejected alternatives (keep for reference):
 
 **Start at Login:** value under `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`.
 
-**HTTP:** one shared `HttpClient` with a 5-second timeout. mDNS `.local` names usually resolve on Windows 10/11, but if not, fall back to an IP in config and note it in the docs.
+**HTTP:** one shared `HttpClient` with a 5-second timeout. mDNS `.local` names do resolve on Windows 11, but slowly (about 2.5 seconds for `onair.local` on the NUC), which delays the light. The docs recommend using the relay's IP; see Progress below.
 
 **Icon:** convert `Resources/AppIcon.svg` (tally-light design: lens ring, glowing red dot, "ON AIR" badge) to a multi-size `.ico` (16, 32, 48, 256) with ImageMagick. A cleaner mono/simplified variant may read better at 16px in the tray.
 
@@ -113,8 +113,9 @@ Rejected alternatives (keep for reference):
 
 ## Progress
 
-Steps 1-6 below are done; the app is in `windows/` and documented in `windows/README.md`. Previewed as 0.1.0 (2026-10-12), hand-tested by the user, then released as **2.0.0** (2026-10-13) to match macOS, with a proper About window. Still to do:
-- Test the relay end to end once the relay box is back on the LAN (`onair.local` didn't resolve from the NUC - may need its IP in config).
+Steps 1-6 below are done; the app is in `windows/` and documented in `windows/README.md`. Previewed as 0.1.0 (2026-10-12), hand-tested by the user, then released as **2.0.0** (2026-10-13) to match macOS, with a proper About window. Relay tested end to end on 2026-10-13: the Camera app switched the relay on and off, with "off" sent after the 2-second grace, and Home Assistant got both webhooks. Via `onair.local` the "on" took about 2.9 seconds, because Windows mDNS lookup takes about 2.5 seconds; via the IP (10.0.1.213) it took 0.2 seconds. The NUC now uses the IP, and `windows/README.md` recommends it.
+
+Still to do:
 - Decide whether to delete the `SensorProbe/` and `RegistryProbe/` prototypes (kept for now).
 - Code signing (optional).
 
