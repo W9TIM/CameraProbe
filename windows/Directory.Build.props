@@ -1,6 +1,6 @@
 <Project>
   <!-- Single source of truth for the Windows version; build-installer.ps1 reads it too. -->
   <PropertyGroup>
-    <Version>0.1.0</Version>
+    <Version>2.0.0</Version>
   </PropertyGroup>
 </Project>

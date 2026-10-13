@@ -2,14 +2,14 @@
 
 A Windows 10/11 tray utility that watches for camera activity and reacts to it: flips the physical "on air" relay and/or fires Home Assistant webhooks whenever the camera turns on or off. It is the Windows counterpart of the macOS menu bar app in this repo - same relay firmware, same Home Assistant webhooks, same config schema.
 
-**Status: 0.1.0 preview.** Tested on Windows 11 Pro 26H2 (build 26300) with a USB webcam, using the Windows Camera app, Chrome and Zoom.
+**Version 2.0.0**, matching the macOS app. Tested on Windows 11 Pro 26H2 (build 26300) with a USB webcam, using the Windows Camera app, Chrome and Zoom.
 
 ## Features
 
 - Detects camera start/stop with the Windows sensor activity monitor (Media Foundation), which reports the actual app using the camera - not a guess from the foreground window.
 - Controls the HTTP relay (`GET /on`, `/off`) and fires Home Assistant webhooks (`camera_on` with the app name, `camera_off`).
 - Tray icon whose tally light glows red while the camera is in use by a non-ignored app. Driven only by local detection: it doesn't depend on the relay or Home Assistant being enabled or reachable, and goes dark while Inactivate is on.
-- Right-click menu: About, Preferences, Inactivate/Reactivate, Quit. Double-click the icon to open Preferences.
+- Right-click menu: About, Preferences, Inactivate/Reactivate, Quit. Double-click the icon to open Preferences. About has quick links to the config and log files.
 - Preferences window for relay, Home Assistant, ignored apps and Start at Login. Changes apply immediately.
 - `CameraProbe --test` / `--status` / `--version` / `--help` from a terminal.
 
@@ -110,7 +110,7 @@ Inside `CameraProbe.Windows/`:
 | `CameraApp.cs` | PID -> app name / exe name, ignore-list matching |
 | `Notifier.cs` | Relay and Home Assistant HTTP calls (ordered, 5-second timeouts) |
 | `Configuration.cs` | Config schema, `%APPDATA%` config file, live `ConfigStore` |
-| `PreferencesForm.cs`, `SplashForm.cs` | Preferences window, launch splash |
+| `PreferencesForm.cs`, `AboutForm.cs`, `SplashForm.cs` | Preferences window, About window, launch splash |
 | `PauseState.cs` | Inactivate/Reactivate |
 | `LoginItem.cs` | Start at Login (`HKCU\...\Run`) |
 | `Diagnostics.cs` | `--test` / `--status` / `--help` / `--version` |

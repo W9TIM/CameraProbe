@@ -4,7 +4,7 @@ A macOS menu bar utility that watches for camera activity and reacts to it: flip
 
 Ships as a normal `.app` you drag into `/Applications` - no installer, no `sudo`, no LaunchAgent. It lives in the menu bar with a custom tally-light icon, shows a red dot on top of it whenever the camera is actively in use, and everything is configured from a Preferences window.
 
-> **Windows:** a Windows 10/11 tray version (0.1.0 preview) lives in [`windows/`](windows/README.md). It uses the same relay firmware, Home Assistant webhooks and config schema. The rest of this README covers the macOS app.
+> **Windows:** a Windows 10/11 tray version (2.0.0, matching this macOS release) lives in [`windows/`](windows/README.md). It uses the same relay firmware, Home Assistant webhooks and config schema. The rest of this README covers the macOS app.
 
 ## Features
 

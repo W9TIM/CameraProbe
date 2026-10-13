@@ -82,13 +82,17 @@ sealed class TrayApp : ApplicationContext
         _preferences.Activate();
     }
 
-    private static void ShowAbout()
+    private AboutForm? _about;
+
+    private void ShowAbout()
     {
-        MessageBox.Show(
-            $"{AppInfo.Name} {AppInfo.Version}\n\n" +
-            "Switches the on-air light and notifies Home Assistant when your camera is in use.\n\n" +
-            $"Config: {ConfigStore.FilePath}\nLog: {Log.FilePath}",
-            $"About {AppInfo.Name}", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        if (_about is null || _about.IsDisposed)
+        {
+            _about = new AboutForm();
+            _about.FormClosed += (_, _) => _about = null;
+            _about.Show();
+        }
+        _about.Activate();
     }
 
     private void Quit()
