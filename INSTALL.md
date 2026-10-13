@@ -62,6 +62,8 @@ Both integrations can be disabled independently in Preferences if you only want 
    - Open `dist/CameraProbe.dmg` and drag **CameraProbe** onto the **Applications** shortcut, or
    - Drag `dist/CameraProbe.app` directly into `/Applications` in Finder.
 
+   Always run CameraProbe from `/Applications`, not from `dist/`. The `dist/` folder is build output only: the app launched from there can fail to show its menu bar icon, and since both copies share the same bundle identifier, macOS (and CameraProbe's single-instance check) treats them as the same app.
+
 5. **First launch:** the app isn't notarized by Apple (it's signed ad-hoc, not with a paid Apple Developer certificate), so macOS's Gatekeeper will initially refuse to open it normally. Right-click `CameraProbe.app` in `/Applications`, choose **Open**, and confirm in the dialog that appears. This is a one-time step - after that, opening it normally (double-click, Spotlight, or as a login item) works fine.
 
 6. A brief splash screen appears, then CameraProbe settles into the menu bar - look for the camera icon near the clock. It doesn't appear in the Dock; this is a background utility.
