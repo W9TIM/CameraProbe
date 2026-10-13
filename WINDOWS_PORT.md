@@ -58,7 +58,7 @@ Every field is optional; missing fields use the defaults shown. A malformed file
 
 **Stack:** C# on .NET 8, WinForms (simplest for a tray app). Visual Studio 2022 Community or VS Code with the C# Dev Kit. Put the project in a new folder (e.g. `windows/CameraProbe.Windows/`) so the macOS sources are untouched. `windows/global.json` pins the .NET 8 SDK (the NUC also has SDK 10 installed, which `dotnet` would otherwise pick). Note .NET 8 support ends 2026-11-10; moving to .NET 10 LTS later is a one-line `TargetFramework` change.
 
-**Camera detection: Media Foundation sensor activity monitor** (`MFCreateSensorActivityMonitor` in `mfsensorgroup.dll`, interfaces in `mfidl.h`). It calls back with a report per camera device listing each process using it, its PID, and whether it is streaming. Map PID -> exe path (`QueryFullProcessImageName`) -> friendly name (file description, e.g. "Zoom Meetings", falling back to the exe name). Prototype: `windows/SensorProbe/`.
+**Camera detection: Media Foundation sensor activity monitor** (`MFCreateSensorActivityMonitor` in `mfsensorgroup.dll`, interfaces in `mfidl.h`). It calls back with a report per camera device listing each process using it, its PID, and whether it is streaming. Map PID -> exe path (`QueryFullProcessImageName`) -> friendly name (file description, e.g. "Zoom Meetings", falling back to the exe name). The test app used to verify this, `windows/SensorProbe/`, was removed after release; it is still in the `v2.0.0` tag.
 
 Verified 2026-10-12 on the NUC (Windows 11 Pro 26H2, build 26300.9550, eMeet C960 USB webcam):
 
@@ -69,7 +69,7 @@ Verified 2026-10-12 on the NUC (Windows 11 Pro 26H2, build 26300.9550, eMeet C96
 | Zoom (Settings -> Video preview) | Clean on/off, `C:\Program Files\Zoom\bin\Zoom.exe`, description "Zoom Meetings" |
 
 Rejected alternatives (keep for reference):
-- **CapabilityAccessManager registry keys** (`HKCU\...\CapabilityAccessManager\ConsentStore\webcam`, `LastUsedTimeStart`/`LastUsedTimeStop`): **do not record webcam use on this build** - nothing was written for any of the three apps, though other capabilities (location, passkeys) still get timestamps. Prototype: `windows/RegistryProbe/`.
+- **CapabilityAccessManager registry keys** (`HKCU\...\CapabilityAccessManager\ConsentStore\webcam`, `LastUsedTimeStart`/`LastUsedTimeStop`): **do not record webcam use on this build** - nothing was written for any of the three apps, though other capabilities (location, passkeys) still get timestamps. Test app: `windows/RegistryProbe/` (removed after release; still in the `v2.0.0` tag).
 - **FrameServer event log** (`Microsoft-Windows-MF-FrameServer/Camera_FrameServer`): no app identity, and it **missed the Zoom session entirely**.
 
 **Tray:** `NotifyIcon` + `ContextMenuStrip`. Windows has no overlay-subview equivalent, so draw the red dot into the tray icon bitmap (swap between a plain and a dotted icon at 16x16 and 32x32 for HiDPI). Single-instance guard via a named `Mutex`.
@@ -116,7 +116,6 @@ Rejected alternatives (keep for reference):
 Steps 1-6 below are done; the app is in `windows/` and documented in `windows/README.md`. Previewed as 0.1.0 (2026-10-12), hand-tested by the user, then released as **2.0.0** (2026-10-13) to match macOS, with a proper About window. Relay tested end to end on 2026-10-13: the Camera app switched the relay on and off, with "off" sent after the 2-second grace, and Home Assistant got both webhooks. Via `onair.local` the "on" took about 2.9 seconds, because Windows mDNS lookup takes about 2.5 seconds; via the IP (10.0.1.213) it took 0.2 seconds. The NUC now uses the IP, and `windows/README.md` recommends it.
 
 Still to do:
-- Decide whether to delete the `SensorProbe/` and `RegistryProbe/` prototypes (kept for now).
 - Code signing (optional).
 
 ## Suggested first steps
