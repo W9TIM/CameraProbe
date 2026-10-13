@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Fixed
+
+- macOS: the menu bar icon could fail to appear on the first launch. Startup ran two synchronous `.local` DNS lookups on the main thread before creating the icon, and on a first launch those could stall (Local Network permission prompt, cold mDNS resolver). The icon and camera monitor now start first, and the lookups run in the background.
+- macOS: launching CameraProbe a second time no longer starts a second copy (which would have run two camera monitors and sent every relay/Home Assistant call twice). The extra launch now exits immediately. The `--status`/`--test`/`--version`/`--help` flags still work while the app is running.
+
 ## [2.0.0 for Windows] - 2026-10-13
 
 First release of the Windows version, numbered 2.0.0 to match the macOS app it mirrors. (It was previewed as 0.1.0 during development.)

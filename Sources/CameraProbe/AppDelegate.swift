@@ -20,13 +20,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         splashWindowController = splash
 
         printStartupBanner()
-        testDNS(relayHost)
-        testDNS(homeAssistantHost)
 
         installSignalHandlers()
 
+        // Menu bar icon and monitor come first, before anything that can
+        // block. A .local (mDNS) lookup can stall for many seconds on the
+        // very first launch - the Local Network permission prompt, or the
+        // resolver waking up - and while it ran on the main thread the
+        // icon never appeared.
         statusBarController = StatusBarController()
         startCameraMonitor()
+
+        // Startup DNS checks only produce log lines, so run them off the
+        // main thread where a slow lookup can't hold anything up.
+        let hostsToCheck = [relayHost, homeAssistantHost]
+        DispatchQueue.global(qos: .utility).async {
+            for host in hostsToCheck {
+                testDNS(host)
+            }
+        }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
             self?.splashWindowController?.dismiss()
