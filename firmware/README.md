@@ -1,11 +1,22 @@
 # CameraProbe Relay Firmware
 
-ESP8266 sketch that exposes `GET /on`, `GET /off`, and `GET /status` over HTTP, so CameraProbe can flip a physical relay whenever your Mac's camera turns on or off. This is the firmware actually running on the reference hardware for this project (a Wemos D1 Mini), configured to match CameraProbe's default config (`onair.local:80`).
+ESP8266 sketches that expose `GET /on`, `GET /off`, and `GET /status` over HTTP, so CameraProbe can flip a physical relay whenever your computer's camera turns on or off. Both are configured to match CameraProbe's default config (`onair.local:80`).
+
+## Which folder do I use?
+
+There are two variants, one per hardware option. Pick the one that matches your board:
+
+| Folder | Hardware | Relay logic |
+|---|---|---|
+| `CameraProbeRelay/` | Wemos D1 Mini + D1 Mini relay shield (photo and parts links in `Wemos D1 Device/`) | Relay pin `D1`; ON = HIGH, OFF = LOW |
+| `CameraProbeRelay8266/` | ESP-01S WiFi relay module (wiring, programmer and datasheet in `ESP8266 Module Device/`) | Relay pin GPIO0; ON = LOW, OFF = HIGH (active-low) |
+
+The rest of this guide applies to both. Wherever it says `CameraProbeRelay.ino`, open the `.ino` in the folder you chose (`CameraProbeRelay8266.ino` for the ESP-01S).
 
 ## Hardware
 
-- ESP8266 board - built and tested on a Wemos D1 Mini; any ESP8266 board works, since the pin is referred to by its `D1` label rather than a raw GPIO number.
-- A relay module (or an LED for testing) wired to `D1`. Edit `relayPin` in the sketch if you wire it elsewhere.
+- **Wemos D1 Mini variant:** a Wemos D1 Mini with a relay shield (or an LED for testing) on `D1`. Edit `relayPin` in the sketch if you wire it elsewhere.
+- **ESP-01S relay variant:** an ESP-01S relay module, programmed through a USB-to-ESP-01 adapter (CH340G). The relay is on GPIO0. On a 2-relay board the second relay is on GPIO2.
 - Power the relay module's VCC/GND per its datasheet. Most 5V relay modules run fine off the board's 5V/VIN pin for light use; use a separate 5V supply if the relay is switching anything with real current draw.
 
 ## Arduino IDE setup
@@ -16,7 +27,7 @@ ESP8266 sketch that exposes `GET /on`, `GET /off`, and `GET /status` over HTTP, 
    https://arduino.esp8266.com/stable/package_esp8266com_index.json
    ```
 3. **Tools → Board → Boards Manager**, search "esp8266", install it.
-4. **Tools → Board**, select **"LOLIN(WEMOS) D1 R2 & mini"** (or your specific board).
+4. **Tools → Board**, select **"LOLIN(WEMOS) D1 R2 & mini"** for the Wemos D1 Mini, or **"Generic ESP8266 Module"** for the ESP-01S.
 5. No extra libraries to install - `ESP8266WiFi`, `ESP8266mDNS`, and `ESP8266WebServer` all ship with the board package.
 
 ## Configure and flash
