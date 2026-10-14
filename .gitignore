@@ -18,6 +18,8 @@ config.json
 # Real WiFi credentials for the ESP8266 relay firmware - see
 # firmware/CameraProbeRelay/secrets.h.example for the tracked template.
 firmware/CameraProbeRelay/secrets.h
+firmware/CameraProbeRelay8266/secrets.h
+**/secrets.h
 
 # .NET build output (Windows port)
 windows/**/bin/
