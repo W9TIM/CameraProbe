@@ -33,6 +33,17 @@ sudo rm -rf "/Library/Application Support/CameraProbe"
 
 None of this touches `~/Library/Application Support/CameraProbe/config.json` (the new per-user config), since that lives at a different path entirely.
 
+## Quick install: download the prebuilt app
+
+No build tools needed:
+
+1. Go to the [latest release](https://github.com/W9TIM/CameraProbe/releases/latest) and download **CameraProbe.dmg** (Windows users: **CameraProbe-Setup-<version>.exe** - see [`windows/README.md`](windows/README.md#install)).
+2. Open the DMG and drag **CameraProbe** onto **Applications**. Eject the DMG.
+3. Open it from `/Applications`. Because the app isn't notarized, macOS will block the first launch: right-click it → **Open** → **Open**, or go to **System Settings → Privacy & Security** and click **Open Anyway**.
+4. Continue at step 6 of the build instructions below (splash screen, Local Network prompt, Preferences).
+
+To build the app yourself instead, continue with the prerequisites below.
+
 ## Prerequisites
 
 - macOS 14 (Sonoma) or later.

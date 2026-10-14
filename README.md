@@ -26,7 +26,16 @@ Ships as a normal `.app` you drag into `/Applications` - no installer, no `sudo`
 - An HTTP-controlled relay reachable on your LAN (optional - can be disabled in Preferences).
 - A Home Assistant instance with webhook automations for `camera_on` / `camera_off` (optional - can be disabled in Preferences).
 
-## Install
+## Download
+
+Prebuilt installers are on the [**latest release**](https://github.com/W9TIM/CameraProbe/releases/latest) page:
+
+- **macOS:** `CameraProbe.dmg` - open it and drag **CameraProbe** onto **Applications**.
+- **Windows:** `CameraProbe-Setup-<version>.exe` - run it (see [`windows/README.md`](windows/README.md#install)).
+
+Neither is signed or notarized, so your OS will warn on first launch - see **First launch** below (macOS) or the Windows README (SmartScreen: **More info → Run anyway**). Prefer to build it yourself? Use the steps below.
+
+## Install (build from source)
 
 ```
 git clone <this repository>
@@ -41,7 +50,7 @@ Then either:
 - Open `dist/CameraProbe.dmg` and drag **CameraProbe** onto the **Applications** shortcut, or
 - Drag `dist/CameraProbe.app` straight into `/Applications` in Finder.
 
-**First launch:** the app isn't notarized by Apple, so right-click `CameraProbe.app` in `/Applications` and choose **Open**, then confirm - after that first approval, opening it normally (double-click, Spotlight, login item) works fine.
+**First launch:** the app isn't notarized by Apple, so right-click `CameraProbe.app` in `/Applications` and choose **Open**, then confirm - after that first approval, opening it normally (double-click, Spotlight, login item) works fine. If macOS still refuses, open **System Settings → Privacy & Security**, scroll to the message about CameraProbe, and click **Open Anyway**.
 
 A brief splash screen (showing the app's own tally-light icon) appears, then CameraProbe settles into the menu bar (look for the tally-light icon near the clock - no Dock icon, this is a background utility). The first time it talks to the network, macOS shows a **Local Network** permission prompt - click **Allow**. `build-app.sh` code-signs the app with a stable identifier specifically so this approval survives future rebuilds.
 
