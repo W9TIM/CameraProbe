@@ -45,6 +45,10 @@ The ESP-01S relay module can run the board and the switched device from one 5V U
                                            Relay NC  --> (unused)
 ```
 
+![Example wiring of the ESP-01S relay module](ESP8266%20Module%20Device/Example%20Wiring.jpeg)
+
+*Example of the finished wiring. The photo is upside down compared with the manufacturer's diagram in `ESP8266 Module Device/`, so the relay block is on the left and the power block is in the middle. The white jumper runs from the relay **COM** (middle terminal) to the power block **GND**. The black wire in the relay block is the **NO** terminal, which goes to the female pigtail GND. The red wires, both on the power block **VCC**, are the male and female pigtail +5V. The other black wire on the power block is the male pigtail GND.*
+
 How it works: +5V is always present on the output pigtail, and the relay switches only the **ground** leg. With the relay off, NO is open, so the device has no return path and stays off. When CameraProbe turns the relay on, COM connects to NO, the circuit completes, and the light comes on.
 
 Limits: the output can't exceed what your USB supply, the pigtail wire gauge and the relay module's terminals can safely carry. The 10A figure is the relay contact rating, not a promise for the whole path. Use a supply and wire sized for your actual load, and for a typical USB light this is far more than needed.
