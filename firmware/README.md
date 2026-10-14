@@ -19,6 +19,36 @@ The rest of this guide applies to both. Wherever it says `CameraProbeRelay.ino`,
 - **ESP-01S relay variant:** an ESP-01S relay module, programmed through a USB-to-ESP-01 adapter (CH340G). The relay is on GPIO0. On a 2-relay board the second relay is on GPIO2.
 - Power the relay module's VCC/GND per its datasheet. Most 5V relay modules run fine off the board's 5V/VIN pin for light use; use a separate 5V supply if the relay is switching anything with real current draw.
 
+## Single-supply wiring (ESP-01S relay variant)
+
+The ESP-01S relay module can run the board and the switched device from one 5V USB supply, using two USB-A pigtails:
+
+- **Male USB-A pigtail** - the power *input*, plugged into any 5V USB supply.
+- **Female USB-A pigtail** - the switched *output*; plug the light or other 5V USB device into it.
+
+| Connection | Wired to |
+|---|---|
+| Board power input **+5V (VCC)** | Male pigtail **+5V** and Female pigtail **+5V** (both on the same terminal) |
+| Board power input **GND** | Male pigtail **GND**, plus a jumper to the relay **COM** |
+| Relay **COM** | Jumper to board power GND (above) |
+| Relay **NO** (Normally Open) | Female pigtail **GND** |
+| Relay **NC** (Normally Closed) | Not connected |
+
+```
+ USB supply --> Male pigtail
+                  +5V ---+---------------- Board VCC ---- Female pigtail +5V
+                         |
+                  GND ---+-- Board GND
+                            |
+                            +-- jumper --> Relay COM
+                                           Relay NO  --> Female pigtail GND
+                                           Relay NC  --> (unused)
+```
+
+How it works: +5V is always present on the output pigtail, and the relay switches only the **ground** leg. With the relay off, NO is open, so the device has no return path and stays off. When CameraProbe turns the relay on, COM connects to NO, the circuit completes, and the light comes on.
+
+Limits: the output can't exceed what your USB supply, the pigtail wire gauge and the relay module's terminals can safely carry. The 10A figure is the relay contact rating, not a promise for the whole path. Use a supply and wire sized for your actual load, and for a typical USB light this is far more than needed.
+
 ## Arduino IDE setup
 
 1. Install the [Arduino IDE](https://www.arduino.cc/en/software) if you don't already have it.
