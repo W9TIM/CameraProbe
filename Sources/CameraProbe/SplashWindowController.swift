@@ -68,7 +68,11 @@ final class SplashWindowController {
             context.duration = 0.3
             window.animator().alphaValue = 0
         }, completionHandler: {
-            window.close()
+            // AppKit runs this on the main thread; tell the compiler so it
+            // accepts the main-actor-isolated close() call.
+            MainActor.assumeIsolated {
+                window.close()
+            }
         })
     }
 }

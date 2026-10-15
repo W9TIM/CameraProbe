@@ -102,7 +102,7 @@ Rejected alternatives (keep for reference):
 | `LoginItem.swift` | Start at Login |
 | `Diagnostics.swift` | `--test` / `--status` / `--help` |
 
-`RelayStatusPoller.swift` exists but is intentionally unused (the dot no longer polls the relay).
+The macOS menu bar dot is driven purely by local detection; it does not poll the relay.
 
 ## Ground rules from the macOS project
 

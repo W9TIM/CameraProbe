@@ -141,13 +141,16 @@ The menu bar's red dot is driven by that same local detection, independently of 
 
 ## Relay firmware
 
-The `firmware/` folder has the ESP8266 sketch (Wemos D1 Mini) that runs the physical relay CameraProbe talks to by default - see [firmware/README.md](firmware/README.md) for wiring, Arduino IDE setup, and flashing instructions. If you already have relay hardware exposing `GET /on` / `GET /off` / `GET /status`, you don't need it; just point the relay host in Preferences (or `config.json`) at your existing device.
+The `firmware/` folder has two ESP8266 sketches that run the physical relay CameraProbe talks to by default, one per hardware option: a **Wemos D1 Mini with relay shield** (`CameraProbeRelay/`) and a more compact **ESP-01S relay module** (`CameraProbeRelay8266/`) - see [firmware/README.md](firmware/README.md) for which to choose, wiring, Arduino IDE setup, and flashing instructions. If you already have relay hardware exposing `GET /on` / `GET /off` / `GET /status`, you don't need it; just point the relay host in Preferences (or `config.json`) at your existing device.
 
 The low voltage relay is used for controlling power to a 5V (USB) light (On/Off) via WiFi. The control unit is constructed with a Wemos D1 Mini (ESP8266) with a single relay shield attached.
 
 This can be housed in a simple 3D printable enclosure and mounted near or for shaddow box lights, inside to keep it out of the way. This arrangement will require two USB connections. One to power the Wemos D1 and one to power the light itself, which will be switched on/off when the +5v line is interrupted by the relay shield. 
 
-Photo's and 3D Printable files are included with this project.
+Photos and 3D-printable files are included with this project:
+
+- **ESP-01S relay case:** a compact two-part enclosure (base and friction-fit lid) - print-ready [STL](firmware/ESP8266%20Module%20Device/ESP01S_Relay_Case.stl), editable [OpenSCAD source](firmware/ESP8266%20Module%20Device/ESP01S_Relay_Case.scad), and the [design spec](firmware/ESP8266%20Module%20Device/CASE_DESIGN_SPEC.md). Includes a single-supply wiring photo and diagram in [firmware/README.md](firmware/README.md#single-supply-wiring-esp-01s-relay-variant).
+- **Wemos D1 Mini case:** see the `3D Printable Files` folder under `firmware/`.
 
 ## Home Assistant setup
 
@@ -164,7 +167,6 @@ CameraProbe calls two built-in Home Assistant webhooks (`camera_on` / `camera_of
 | `StatusBarController.swift` | Menu bar icon, right-click menu, camera-activity dot overlay |
 | `SettingsWindowController.swift` | Preferences window |
 | `SplashWindowController.swift` | Brief launch splash screen (shows the app icon) |
-| `RelayStatusPoller.swift` | Not currently used by the menu bar dot (see CameraMonitor.swift's CameraActivityIndicator) - kept for possible future relay-reachability diagnostics |
 | `PauseState.swift` | Inactivate/Reactivate state |
 | `LoginItem.swift` | Start at Login (`SMAppService`) |
 | `Configuration.swift` | Config schema, per-user config file, live `ConfigStore` |
