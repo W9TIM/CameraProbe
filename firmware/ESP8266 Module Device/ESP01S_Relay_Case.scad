@@ -27,7 +27,12 @@ standoff  = 2.0;         // PCB underside to floor
 lid_t     = 2.0;
 lip_h     = 2.5;         // how far the lid lip goes into the base
 lip_wall  = 1.2;
-lip_tol   = 0.10;        // lid lip gap per side: 0.0 = press fit, 0.1 = snug, 0.2+ = loose
+lip_tol   = 0.1;         // lid lip gap per side. NEGATIVE = oversize lip (interference).
+                         // Tune this after measuring your print (see README note below).
+bump_h    = 0.5;         // crush ribs on the lip: how far each rib sticks out past the lip face.
+                         // The ribs do the gripping, so the lip itself can stay near nominal.
+                         // Set 0 to turn the ribs off.
+bump_w    = 2.0;         // rib width
 corner_r  = 1.5;
 
 // ---- Cable notches in the front wall (half-round, closed by the lid) ----
@@ -101,6 +106,19 @@ module lid() {
                         cube([inner_l - 2*lip_tol - 2*lip_wall,
                               inner_w - 2*lip_tol - 2*lip_wall, lip_h + 1]);
                 }
+            // Crush ribs: thin vertical ridges that press into the cavity walls.
+            if (bump_h > 0) {
+                lx = wall + lip_tol;  ly = wall + lip_tol;
+                ll = inner_l - 2*lip_tol;  lw = inner_w - 2*lip_tol;
+                // front and back faces (two ribs each)
+                for (f = [0.3, 0.7]) {
+                    translate([lx + ll*f - bump_w/2, ly - bump_h, lid_t]) cube([bump_w, bump_h + 0.2, lip_h]);
+                    translate([lx + ll*f - bump_w/2, ly + lw - 0.2, lid_t]) cube([bump_w, bump_h + 0.2, lip_h]);
+                }
+                // left and right ends (one rib each)
+                translate([lx - bump_h, ly + lw/2 - bump_w/2, lid_t]) cube([bump_h + 0.2, bump_w, lip_h]);
+                translate([lx + ll - 0.2, ly + lw/2 - bump_w/2, lid_t]) cube([bump_h + 0.2, bump_w, lip_h]);
+            }
         }
         // vent slots over the relay (left ~60% of the board)
         for (i = [0 : 3])
