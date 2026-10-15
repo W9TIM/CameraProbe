@@ -21,6 +21,10 @@ firmware/CameraProbeRelay/secrets.h
 firmware/CameraProbeRelay8266/secrets.h
 **/secrets.h
 
+# Arduino IDE "Export Compiled Binary" output - .bin files go on the
+# GitHub release page, not in the repo.
+firmware/**/build/
+
 # .NET build output (Windows port)
 windows/**/bin/
 windows/**/obj/

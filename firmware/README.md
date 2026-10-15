@@ -26,6 +26,51 @@ The relay always starts **off** at power-up. Until a board is chosen, the firmwa
 
 Security note: **ConfigRelay** is an open network by design, so it's easy for novices. It only appears when the device isn't on your WiFi. On your home network, `/configure` and `/update` have no password, so anyone on that network can change them. That's the same trust level as `/on` and `/off`.
 
+## Flash the prebuilt firmware (no Arduino IDE needed)
+
+Each [release](https://github.com/W9TIM/CameraProbe/releases/latest) includes a ready-made file, `CameraProbeRelay-Universal-<version>.bin`. It's the same file for both boards. Download it, then use one of the two methods below.
+
+**Before you start, connect the board:**
+
+- **Wemos D1 Mini:** plug it into the computer with a USB data cable. Some cables only carry power.
+- **ESP-01S:** take the ESP-01S module off the relay board and plug it into the USB programmer. The module must start in flashing mode: GPIO0 held to GND at power-up. If your programmer has a PROG/UART switch, set it to PROG. If not, connect GPIO0 to GND while you plug it in. When flashing is finished, set the switch back (or remove the jumper) and put the module back on the relay board.
+- Both boards use a CH340 USB chip. Current macOS and Windows normally recognize it automatically. If no port appears, install the CH340 driver from the adapter maker.
+
+### Option A: in a web browser (easiest)
+
+Use Chrome or Edge on a Mac or PC. Safari isn't supported.
+
+1. Open [espressif.github.io/esptool-js](https://espressif.github.io/esptool-js/), Espressif's own browser flasher.
+2. Leave the baud rate at **115200**, click **Connect**, and pick the board's USB serial port (it usually mentions *CH340* or *usbserial*).
+3. *(Optional, first time only)* click **Erase Flash** for a clean start.
+4. Under **Program**, set **Flash Address** to `0x0`, choose the downloaded `.bin` file, and click **Program**.
+5. When it finishes, unplug and replug the board (for the ESP-01S, back on its relay board), then follow [First-time setup](#recommended-universal-firmware-flash-boot-configure-go).
+
+### Option B: from Terminal or PowerShell (esptool)
+
+```
+pip install esptool
+esptool --port PORT write-flash 0x0 CameraProbeRelay-Universal-<version>.bin
+```
+
+Replace `PORT` with the board's port: on macOS something like `/dev/cu.usbserial-110` (list them with `ls /dev/cu.*`), on Windows `COM3` or similar (shown in Device Manager → Ports). Older esptool versions use `esptool.py` and `write_flash` instead. Add `erase-flash` as a separate command first if you want a clean start:
+
+```
+esptool --port PORT erase-flash
+```
+
+### Already running the universal firmware?
+
+You don't need USB again. Open `http://onair.local/update`, choose the new `.bin`, and click **Update**. Your settings are kept.
+
+### For maintainers: making the `.bin` for a release
+
+1. In the Arduino IDE, open `CameraProbeRelayUniversal.ino` with **Board: Generic ESP8266 Module** and **Flash Size: 1MB (FS:64KB OTA:~470KB)**.
+2. **Sketch → Export Compiled Binary.** The file appears in the sketch folder under `build/esp8266.esp8266.generic/CameraProbeRelayUniversal.ino.bin`.
+3. Rename it `CameraProbeRelay-Universal-<version>.bin` (the version is `FW_VERSION` at the top of the sketch) and attach it to the GitHub release.
+
+The 1MB build runs on the Wemos D1 Mini's larger 4MB flash too, so one file covers both boards. Don't commit the `build/` folder. The `.bin` belongs on the release page, not in the repo.
+
 ## Fixed-configuration sketches
 
 The original sketches are still here for anyone who prefers settings compiled into the firmware. Each one targets one board and reads WiFi details from `secrets.h`. Pick the one that matches your board:
