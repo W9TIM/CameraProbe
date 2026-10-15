@@ -1,10 +1,34 @@
 # CameraProbe Relay Firmware
 
-ESP8266 sketches that expose `GET /on`, `GET /off`, and `GET /status` over HTTP, so CameraProbe can flip a physical relay whenever your computer's camera turns on or off. Both are configured to match CameraProbe's default config (`onair.local:80`).
+ESP8266 sketches that expose `GET /on`, `GET /off`, and `GET /status` over HTTP, so CameraProbe can flip a physical relay whenever your computer's camera turns on or off. All of them match CameraProbe's default config (`onair.local:80`).
 
-## Which folder do I use?
+## Recommended: universal firmware (flash, boot, configure, go)
 
-There are two variants, one per hardware option. Pick the one that matches your board:
+`CameraProbeRelayUniversal/` is one firmware for every supported board. You don't edit a `secrets.h` file, and you never re-flash it to change WiFi. You set the WiFi network, board type and device name from a web page.
+
+**First-time setup**
+
+1. Flash `CameraProbeRelayUniversal.ino` (see [Arduino IDE setup](#arduino-ide-setup); choose **Generic ESP8266 Module** for either board).
+2. Power the device. With no settings saved yet, it starts an open WiFi network called **ConfigRelay**.
+3. Join **ConfigRelay** from a phone or computer. The setup page usually opens by itself; if not, browse to `http://192.168.4.1`.
+4. Choose your WiFi network, enter its password, pick your **relay board** (Wemos D1 Mini + relay shield, ESP-01S relay module, or Custom pin/logic), and keep the device name `onair` unless you also change it in CameraProbe's Preferences.
+5. Click **Save and reboot**. The device joins your network. Reconnect your phone or computer to your home WiFi and open `http://onair.local/configure` to confirm. The page has **Relay on / Relay off** test buttons.
+
+**Later**
+
+- **Check or change settings:** `http://onair.local/configure`. The saved WiFi password is never shown. Leave the field blank to keep it.
+- **New router or WiFi password:** if the device can't join its saved network within about 30 seconds of power-up, it opens **ConfigRelay** again so you can enter the new details.
+- **Power cuts:** if the router is still starting up, the device waits in setup mode. If nobody connects to it within 3 minutes, it restarts and tries the saved network again, so it reconnects by itself once the router is back.
+- **Factory reset (no button needed):** plug the device in for about 2 seconds and unplug it, two times. Plug it in a third time and leave it. All settings are erased and it starts **ConfigRelay**. The **Factory reset** button on the setup page does the same.
+- **Firmware updates over WiFi:** `http://onair.local/update` accepts a `.bin` file. In the Arduino IDE, export one with **Sketch → Export Compiled Binary**. After the first USB flash, you don't need the programmer again.
+
+The relay always starts **off** at power-up. Until a board is chosen, the firmware doesn't drive any pin at all. That matters on the ESP-01S, where GPIO0 must not be held low while it boots.
+
+Security note: **ConfigRelay** is an open network by design, so it's easy for novices. It only appears when the device isn't on your WiFi. On your home network, `/configure` and `/update` have no password, so anyone on that network can change them. That's the same trust level as `/on` and `/off`.
+
+## Fixed-configuration sketches
+
+The original sketches are still here for anyone who prefers settings compiled into the firmware. Each one targets one board and reads WiFi details from `secrets.h`. Pick the one that matches your board:
 
 | Folder | Hardware | Relay logic |
 |---|---|---|
@@ -61,10 +85,12 @@ Limits: the output can't exceed what your USB supply, the pigtail wire gauge and
    https://arduino.esp8266.com/stable/package_esp8266com_index.json
    ```
 3. **Tools → Board → Boards Manager**, search "esp8266", install it.
-4. **Tools → Board**, select **"LOLIN(WEMOS) D1 R2 & mini"** for the Wemos D1 Mini, or **"Generic ESP8266 Module"** for the ESP-01S.
+4. **Tools → Board**, select **"Generic ESP8266 Module"** for the universal firmware (either board), or for the fixed sketches **"LOLIN(WEMOS) D1 R2 & mini"** (Wemos D1 Mini) / **"Generic ESP8266 Module"** (ESP-01S). For the universal firmware, also set **Tools → Flash Size** to an option with an OTA area, such as **"1MB (FS:64KB OTA:~470KB)"**, so `/update` works.
 5. No extra libraries to install - `ESP8266WiFi`, `ESP8266mDNS`, and `ESP8266WebServer` all ship with the board package.
 
-## Configure and flash
+## Configure and flash (fixed-configuration sketches)
+
+For the universal firmware, just open `CameraProbeRelayUniversal/CameraProbeRelayUniversal.ino`, upload it, and follow [First-time setup](#recommended-universal-firmware-flash-boot-configure-go) above. Skip steps 2–3 below, since there's no `secrets.h`.
 
 1. Open `CameraProbeRelay.ino` in the Arduino IDE.
 2. In this same folder, copy `secrets.h.example` to `secrets.h` and fill in your real WiFi network name and password:

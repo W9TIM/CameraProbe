@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Universal relay firmware** (`firmware/CameraProbeRelayUniversal/`): one firmware for the Wemos D1 Mini, the ESP-01S relay module, or a custom pin. It has no `secrets.h` and never needs re-flashing to change WiFi. If it can't join a saved network, it opens an open **ConfigRelay** setup network with a captive setup page. On your network, `http://onair.local/configure` shows and changes settings, with relay test buttons. It also supports a factory reset by powering it on 3 times quickly, and firmware updates over WiFi at `/update`. The `/on`, `/off` and `/status` endpoints are unchanged.
+
 ### Fixed
 
 - macOS: the menu bar icon could fail to appear on the first launch. Startup ran two synchronous `.local` DNS lookups on the main thread before creating the icon, and on a first launch those could stall (Local Network permission prompt, cold mDNS resolver). The icon and camera monitor now start first, and the lookups run in the background.

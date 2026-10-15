@@ -141,7 +141,7 @@ The menu bar's red dot is driven by that same local detection, independently of 
 
 ## Relay firmware
 
-The `firmware/` folder has two ESP8266 sketches that run the physical relay CameraProbe talks to by default, one per hardware option: a **Wemos D1 Mini with relay shield** (`CameraProbeRelay/`) and a more compact **ESP-01S relay module** (`CameraProbeRelay8266/`) - see [firmware/README.md](firmware/README.md) for which to choose, wiring, Arduino IDE setup, and flashing instructions. If you already have relay hardware exposing `GET /on` / `GET /off` / `GET /status`, you don't need it; just point the relay host in Preferences (or `config.json`) at your existing device.
+The `firmware/` folder has the ESP8266 firmware for the physical relay CameraProbe talks to by default. The recommended **universal firmware** (`CameraProbeRelayUniversal/`) works on either a **Wemos D1 Mini with relay shield** or the more compact **ESP-01S relay module**. You flash it once, then set WiFi and the board type from a web page, either on the device's **ConfigRelay** setup network or at `http://onair.local/configure`. The original fixed-configuration sketches (`CameraProbeRelay/`, `CameraProbeRelay8266/`) are kept as well. See [firmware/README.md](firmware/README.md) for which to choose, wiring, Arduino IDE setup, and flashing instructions. If you already have relay hardware exposing `GET /on` / `GET /off` / `GET /status`, you don't need it; just point the relay host in Preferences (or `config.json`) at your existing device.
 
 The low voltage relay is used for controlling power to a 5V (USB) light (On/Off) via WiFi. The control unit is constructed with a Wemos D1 Mini (ESP8266) with a single relay shield attached.
 
