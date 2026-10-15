@@ -27,7 +27,7 @@ standoff  = 2.0;         // PCB underside to floor
 lid_t     = 2.0;
 lip_h     = 2.5;         // how far the lid lip goes into the base
 lip_wall  = 1.2;
-lip_tol   = 0.25;        // lid lip clearance per side; raise if too tight
+lip_tol   = 0.10;        // lid lip gap per side: 0.0 = press fit, 0.1 = snug, 0.2+ = loose
 corner_r  = 1.5;
 
 // ---- Cable notches in the front wall (half-round, closed by the lid) ----
@@ -92,12 +92,14 @@ module lid() {
         union() {
             rrect(outer_l, outer_w, lid_t, corner_r);
             // lip that drops into the base opening
-            translate([wall + lip_tol + lip_wall, wall + lip_tol + lip_wall, lid_t])
+            // Lip outer face sits lip_tol short of the cavity wall on each side,
+            // so it is a snug fit rather than loose.
+            translate([wall + lip_tol, wall + lip_tol, lid_t])
                 difference() {
-                    cube([inner_l - 2*(lip_tol + lip_wall), inner_w - 2*(lip_tol + lip_wall), lip_h]);
+                    cube([inner_l - 2*lip_tol, inner_w - 2*lip_tol, lip_h]);
                     translate([lip_wall, lip_wall, -0.01])
-                        cube([inner_l - 2*(lip_tol + lip_wall) - 2*lip_wall,
-                              inner_w - 2*(lip_tol + lip_wall) - 2*lip_wall, lip_h + 1]);
+                        cube([inner_l - 2*lip_tol - 2*lip_wall,
+                              inner_w - 2*lip_tol - 2*lip_wall, lip_h + 1]);
                 }
         }
         // vent slots over the relay (left ~60% of the board)
