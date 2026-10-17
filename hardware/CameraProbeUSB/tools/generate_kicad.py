@@ -27,7 +27,7 @@ G = 2.54  # grid
 # purpose: assign them once you have the actual parts (see README).
 FP_R = "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
 FP_C = "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder"
-FP_CT = "Capacitor_Tantalum_SMD:CP_EIA-3216-18_Kemet-A_Pad1.58x1.35mm_HandSolder"
+FP_CT = "Capacitor_Tantalum_SMD:CP_EIA-3216-18_Kemet-A"
 FP_LED = "LED_SMD:LED_0805_2012Metric_Pad1.15x1.40mm_HandSolder"
 FP_FUSE = "Fuse:Fuse_1812_4532Metric"
 FP_SOT23 = "Package_TO_SOT_SMD:SOT-23"
@@ -190,6 +190,20 @@ def lib_symbol(name):
     out.append(")")
     return " ".join(out)
 
+def write_library():
+    """Symbol library + project sym-lib-table, so KiCad knows the
+    'CameraProbeUSB' library the schematic's symbols come from."""
+    syms = []
+    for name in sorted(SYMBOLS):
+        syms.append(lib_symbol(name).replace(f'(symbol "{PROJECT}:{name}"', f'(symbol "{name}"', 1))
+    with open(os.path.join(OUT, f"{PROJECT}.kicad_sym"), "w") as f:
+        f.write(f'(kicad_symbol_lib (version 20231120) (generator "kicad_symbol_editor") '
+                f'(generator_version "8.0") {" ".join(syms)})\n')
+    with open(os.path.join(OUT, "sym-lib-table"), "w") as f:
+        f.write('(sym_lib_table\n  (version 7)\n'
+                f'  (lib (name "{PROJECT}")(type "KiCad")(uri "${{KIPRJMOD}}/{PROJECT}.kicad_sym")'
+                '(options "")(descr "CameraProbe USB board symbols"))\n)\n')
+
 def label_text_len(net):
     return len(net) * 1.0 + 2
 
@@ -295,6 +309,10 @@ PRO = """{
 """
 
 if __name__ == "__main__":
+    import sys
+    write_library()
+    if "--library-only" in sys.argv:
+        sys.exit(0)
     sch, placed = build()
     net, nets = build_netlist(placed)
     with open(os.path.join(OUT, f"{PROJECT}.kicad_sch"), "w") as f:

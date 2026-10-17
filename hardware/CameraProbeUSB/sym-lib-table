@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "CameraProbeUSB")(type "KiCad")(uri "${KIPRJMOD}/CameraProbeUSB.kicad_sym")(options "")(descr "CameraProbe USB board symbols"))
+)

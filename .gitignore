@@ -31,6 +31,8 @@ firmware/**/build/
 fp-info-cache
 *.lck
 _autosave-*
+.history/
+*.rpt
 
 # .NET build output (Windows port)
 windows/**/bin/
