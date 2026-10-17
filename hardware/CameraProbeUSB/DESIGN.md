@@ -135,13 +135,15 @@ AO3401A at 1.5 A dissipates roughly 0.1 W. Give its drain and source generous co
 
 ## 3. Bill of materials (Rev A)
 
+The exact parts ordered for the first build are in `BOM.csv` and `digikey_order.csv`.
+
 | Ref | Qty | Part | Package | Example MPN |
 |---|---|---|---|---|
 | U3 | 1 | ESP-12F WiFi module | castellated module | Ai-Thinker ESP-12F |
 | U2 | 1 | USB-UART bridge | SOIC-16 | WCH CH340C |
-| U1 | 1 | 3.3V LDO, 1 A | SOT-223 | AMS1117-3.3 |
+| U1 | 1 | 3.3V LDO, 1 A | SOT-223 | AMS1117-3.3 (Rev A build: TI LM1117MPX-3.3/NOPB) |
 | Q1, Q2 | 2 | NPN transistor | SOT-23 | MMBT3904 |
-| Q3 | 1 | P-ch MOSFET, -30V/-4A | SOT-23 | AO3401A |
+| Q3 | 1 | P-ch MOSFET, -20V/-3A or better | SOT-23 | AO3401A (Rev A build: Vishay SI2301CDS-T1-BE3) |
 | Q4 | 1 | N-ch MOSFET | SOT-23 | 2N7002 |
 | F1 | 1 | Polyfuse 1.5 A hold | 1812 | Bourns MF-MSMF150 (or equivalent) |
 | J1 | 1 | USB-A **male plug**, right angle, PCB mount | SMD + THT tabs | **CNC Tech 1001-011-01101** (Digi-Key 1175-1008-ND) |

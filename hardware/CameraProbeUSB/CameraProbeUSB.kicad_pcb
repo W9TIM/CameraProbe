@@ -9337,6 +9337,54 @@
 		(layer "Edge.Cuts")
 		(uuid "b7af8a95-add3-4a28-a114-a0af60a20680")
 	)
+	(gr_text "W9TIM / github.com/W9TIM/CameraProbe"
+		(at 137.5 126.6 0)
+		(layer "B.SilkS")
+		(uuid "0927c8b0-cebf-4d9b-bf6f-23915bd04c46")
+		(effects
+			(font
+				(size 0.9 0.9)
+				(thickness 0.135)
+			)
+			(justify mirror)
+		)
+	)
+	(gr_text "CameraProbe USB  Rev A"
+		(at 131 124.6 0)
+		(layer "B.SilkS")
+		(uuid "d11dc949-140d-4b91-815e-df878d889802")
+		(effects
+			(font
+				(size 1.2 1.2)
+				(thickness 0.18)
+			)
+			(justify mirror)
+		)
+	)
+	(gr_text "IN"
+		(at 103.5 102.6 0)
+		(layer "B.SilkS")
+		(uuid "dbcbcd65-8d3a-41b6-8910-0caeaac764ec")
+		(effects
+			(font
+				(size 1.5 1.5)
+				(thickness 0.225)
+			)
+			(justify mirror)
+		)
+	)
+	(gr_text "OUT"
+		(at 170 102.6 0)
+		(layer "B.SilkS")
+		(uuid "27201e03-83ae-4357-8e28-5b99949826a9")
+		(effects
+			(font
+				(size 1.5 1.5)
+				(thickness 0.225)
+			)
+			(justify mirror)
+		)
+	)
 	(segment
 		(start 137.1534 121.1534)
 		(end 138.143 121.1534)
@@ -12482,52 +12530,4 @@
 		(uuid "db7d69b6-9ed4-4eaa-a5f4-57130ce4d323")
 	)
 	(embedded_fonts no)
-	(gr_text "IN"
-		(at 103.5 102.6 0)
-		(layer "B.SilkS")
-		(uuid "dbcbcd65-8d3a-41b6-8910-0caeaac764ec")
-		(effects
-			(font
-				(size 1.5 1.5)
-				(thickness 0.225)
-			)
-			(justify mirror)
-		)
-	)
-	(gr_text "OUT"
-		(at 170.0 102.6 0)
-		(layer "B.SilkS")
-		(uuid "27201e03-83ae-4357-8e28-5b99949826a9")
-		(effects
-			(font
-				(size 1.5 1.5)
-				(thickness 0.225)
-			)
-			(justify mirror)
-		)
-	)
-	(gr_text "CameraProbe USB  Rev A"
-		(at 131 124.6 0)
-		(layer "B.SilkS")
-		(uuid "d11dc949-140d-4b91-815e-df878d889802")
-		(effects
-			(font
-				(size 1.2 1.2)
-				(thickness 0.18)
-			)
-			(justify mirror)
-		)
-	)
-	(gr_text "W9TIM / github.com/W9TIM/CameraProbe"
-		(at 137.5 126.6 0)
-		(layer "B.SilkS")
-		(uuid "0927c8b0-cebf-4d9b-bf6f-23915bd04c46")
-		(effects
-			(font
-				(size 0.9 0.9)
-				(thickness 0.135)
-			)
-			(justify mirror)
-		)
-	)
 )

@@ -606,7 +606,7 @@
     "last_paths": {
       "idf": "",
       "netlist": "CameraProbeUSB.net",
-      "plot": "",
+      "plot": "Gerbers/",
       "specctra_dsn": "CameraProbeUSB.dsn",
       "step": "",
       "vrml": ""

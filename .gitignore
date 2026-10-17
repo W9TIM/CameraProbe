@@ -33,6 +33,9 @@ fp-info-cache
 _autosave-*
 .history/
 *.rpt
+# Scratch copies of zips uploaded to PCBWay / its viewer
+hardware/CameraProbeUSB/uploads/
+
 # Freerouting exchange files (regenerated on each autoroute)
 *.dsn
 *.ses
