@@ -25,6 +25,13 @@ firmware/CameraProbeRelay8266/secrets.h
 # GitHub release page, not in the repo.
 firmware/**/build/
 
+# KiCad local/backup files
+*-backups/
+*.kicad_prl
+fp-info-cache
+*.lck
+_autosave-*
+
 # .NET build output (Windows port)
 windows/**/bin/
 windows/**/obj/
