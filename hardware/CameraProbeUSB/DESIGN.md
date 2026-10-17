@@ -23,7 +23,7 @@ A single USB stick that replaces the ESP-01S relay module and its pigtail wiring
 | Auto-program | 2 x NPN transistors on DTR/RTS (NodeMCU circuit) | esptool/Arduino enter flash mode automatically |
 | Output switch | **High-side P-MOSFET** (AO3401A) driven by an N-MOSFET (2N7002) | Silent, no relay coil current; switches +5V, which is correct for USB loads; **off by default** at power-up |
 | 3.3V supply | **AMS1117-3.3** (SOT-223) | Easiest regulator to hand-solder; adequate for ESP8266 peaks (~350 mA) |
-| Output rating | **5V, 2A max** | Limited by USB-A connectors, trace width and the polyfuse |
+| Output rating | **5V, 1.5A max** | Limited by the USB-A plug's 1.5A rating (CNC Tech 1001-011-01101) and the polyfuse |
 | Part sizes | 0805 passives, SOT-23 / SOT-223 / SOIC-16 | Hand-solderable with a fine tip, flux and tweezers |
 
 ## 2. Schematic, block by block
@@ -40,7 +40,7 @@ Net names in `CAPS`. `VBUS` = raw USB 5V from the plug, `5V` = after the fuse, `
 | 4 GND | `GND` |
 | Shell | `GND` (through-hole tabs soldered for strength) |
 
-- **F1** polyfuse, 2.0 A hold (1812): `VBUS` to `5V`. Protects the charger or computer port if the output is shorted.
+- **F1** polyfuse, 1.5 A hold (1812): `VBUS` to `5V`. Protects the charger or computer port if the output is shorted.
 - **C1** 10 µF 0805 (16V+) and **C2** 100 nF 0805: `5V` to `GND`, near J1.
 - *(Optional, DNP for Rev A)* **U4** USBLC6-2SC6 ESD protection on `USB_DP`/`USB_DM`.
 
@@ -119,7 +119,7 @@ esptool toggles DTR/RTS so that EN is pulsed low while GPIO0 is held low, which 
 - **C10** 10 µF on `5V_OUT` (optional; keep small to limit inrush current).
 - **D1** "ON AIR" LED (red, 0805) + **R14** 1 kΩ from `5V_OUT` to `GND`. It lights whenever the output is actually powered: a hardware indicator independent of the firmware.
 
-AO3401A at 2 A dissipates roughly 0.1–0.2 W. Give its drain and source generous copper (section 4).
+AO3401A at 1.5 A dissipates roughly 0.1 W. Give its drain and source generous copper (section 4).
 
 ### 2.7 USB output (J2, USB-A female socket)
 
@@ -143,9 +143,9 @@ AO3401A at 2 A dissipates roughly 0.1–0.2 W. Give its drain and source generou
 | Q1, Q2 | 2 | NPN transistor | SOT-23 | MMBT3904 |
 | Q3 | 1 | P-ch MOSFET, -30V/-4A | SOT-23 | AO3401A |
 | Q4 | 1 | N-ch MOSFET | SOT-23 | 2N7002 |
-| F1 | 1 | Polyfuse 2.0 A hold | 1812 | Bourns MF-MSMF200 (or equivalent) |
-| J1 | 1 | USB-A **male plug**, PCB mount, through-hole | THT | any; match footprint to the part |
-| J2 | 1 | USB-A **female socket**, PCB mount, through-hole | THT | any; match footprint to the part |
+| F1 | 1 | Polyfuse 1.5 A hold | 1812 | Bourns MF-MSMF150 (or equivalent) |
+| J1 | 1 | USB-A **male plug**, right angle, PCB mount | SMD + THT tabs | **CNC Tech 1001-011-01101** (Digi-Key 1175-1008-ND) |
+| J2 | 1 | USB-A **female socket**, right angle, through-hole | THT | **Molex 0676433910** |
 | SW1 | 1 | Tactile switch, side or top actuated | 6x3.5 mm SMD/THT | any |
 | D1 | 1 | Red LED | 0805 | any |
 | D2 | 1 | Green LED (optional) | 0805 | any |

@@ -17,7 +17,7 @@ A USB stick with a USB-A plug in, a switched USB-A socket out, and an ESP-12F in
 1. **File → Open Project…** and choose `CameraProbeUSB.kicad_pro`.
 2. Open the **Schematic Editor**. The sheet is grouped into five labelled blocks (USB input and regulator, USB serial, ESP-12F, output switch, optional LED). Parts are simple labelled boxes, and connections are made with **net labels**: two pins with the same label (e.g. `+3V3`) are connected.
 3. Run **Inspect → Electrical Rules Checker**. It should report no errors.
-4. **Assign the two USB connector footprints** (J1 and J2 are left blank on purpose): once your connectors arrive, double-click J1 / J2 → Footprint, and choose a footprint that matches the exact part, or create one from its datasheet. Every other part already has a hand-solder footprint from KiCad's standard libraries.
+4. **USB connectors:** the footprints match two specific parts, so buy exactly these: J1 = **CNC Tech 1001-011-01101** (USB-A plug, Digi-Key 1175-1008-ND) and J2 = **Molex 0676433910** (USB-A socket). Every other part has a hand-solder footprint from KiCad's standard libraries.
 5. Check the **ESP-12F GPIO4 / GPIO5 pins** (pins 19 and 20) against your module's datasheet. Some ESP-12 modules have these two swapped. If yours does, either swap the `BTN` / `SW_DRV` labels on U3, or keep the board and choose **Custom → GPIO4** in the firmware setup page.
 6. **Tools → Update PCB from Schematic** (F8) sends everything to the PCB editor for layout. Follow the layout guidelines in DESIGN.md section 4.
 

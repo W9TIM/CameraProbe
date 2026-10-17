@@ -39,3 +39,6 @@ windows/**/bin/
 windows/**/obj/
 windows/publish/
 windows/dist/
+
+# Python bytecode
+__pycache__/
