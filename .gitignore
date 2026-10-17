@@ -33,6 +33,9 @@ fp-info-cache
 _autosave-*
 .history/
 *.rpt
+# Freerouting exchange files (regenerated on each autoroute)
+*.dsn
+*.ses
 
 # .NET build output (Windows port)
 windows/**/bin/
