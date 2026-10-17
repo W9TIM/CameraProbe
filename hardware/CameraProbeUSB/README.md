@@ -1,5 +1,7 @@
 # CameraProbe USB Relay Board (Rev A)
 
+> **Status: paused (October 2026).** This design is complete and routed (DRC clean, Gerbers in `Gerbers/`) but has **not been built or tested**. Development stopped because the per-unit cost in small quantities is higher than the ESP-01S relay module or an off-the-shelf USB switch running the universal firmware (see `firmware/README.md`). The files are kept for reference; if you build one, treat it as untested.
+
 A USB stick with a USB-A plug in, a switched USB-A socket out, and an ESP-12F inside. It runs the universal relay firmware and is programmed through its own USB plug. The full circuit, parts list, layout rules and bring-up steps are in [DESIGN.md](DESIGN.md).
 
 ## Files
