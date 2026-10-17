@@ -57,7 +57,7 @@ SYMBOLS = {
     "PMOS":  (7.62, [("1", "G", "L"), ("2", "S", "R"), ("3", "D", "R")]),
     "AMS1117": (12.7, [("3", "VIN", "L"), ("2", "VOUT", "R"), ("1", "GND", "R")]),
     "USB_A": (12.7, [("1", "VBUS", "R"), ("2", "D-", "R"), ("3", "D+", "R"),
-                     ("4", "GND", "R"), ("5", "SHIELD", "R")]),
+                     ("4", "GND", "R"), ("SH", "SHIELD", "R")]),
     "CH340C": (17.78, [("5", "UD+", "L"), ("6", "UD-", "L"), ("16", "VCC", "L"),
                        ("4", "V3", "L"), ("1", "GND", "L"), ("7", "NC", "L"),
                        ("8", "NC", "L"), ("15", "R232", "L"),
@@ -79,7 +79,7 @@ SYMBOLS = {
 # ---------------------------------------------------------------------------
 CIRCUIT = [
     ("1. USB input, fuse, 3.3V regulator", [
-        ("J1", "USB_A", "USB-A plug (IN)", FP_USB_PLUG, {"1": "VBUS", "2": "USB_DM", "3": "USB_DP", "4": "GND", "5": "GND"}),
+        ("J1", "USB_A", "USB-A plug (IN)", FP_USB_PLUG, {"1": "VBUS", "2": "USB_DM", "3": "USB_DP", "4": "GND", "SH": "GND"}),
         ("F1", "Fuse", "1.5A hold PTC", FP_FUSE, {"1": "VBUS", "2": "+5V"}),
         ("C1", "C", "10uF", FP_C, {"1": "+5V", "2": "GND"}),
         ("C2", "C", "100nF", FP_C, {"1": "+5V", "2": "GND"}),
@@ -132,7 +132,7 @@ CIRCUIT = [
         ("C10", "C", "10uF", FP_C, {"1": "5V_OUT", "2": "GND"}),
         ("R14", "R", "1k", FP_R, {"1": "5V_OUT", "2": "LED_ON_A"}),
         ("D1", "LED", "Red ON AIR", FP_LED, {"2": "LED_ON_A", "1": "GND"}),
-        ("J2", "USB_A", "USB-A socket (OUT)", FP_USB_SOCKET, {"1": "5V_OUT", "2": "OUT_D", "3": "OUT_D", "4": "GND", "5": "GND"}),
+        ("J2", "USB_A", "USB-A socket (OUT)", FP_USB_SOCKET, {"1": "5V_OUT", "2": "OUT_D", "3": "OUT_D", "4": "GND", "SH": "GND"}),
         ("TP4", "TP", "TP_GPIO5", FP_TP, {"1": "SW_DRV"}),
     ]),
     ("5. Optional power LED", [
