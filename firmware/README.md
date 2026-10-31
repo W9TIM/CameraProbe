@@ -26,6 +26,71 @@ The relay always starts **off** at power-up. Until a board is chosen, the firmwa
 
 Security note: **ConfigRelay** is an open network by design, so it's easy for novices. It only appears when the device isn't on your WiFi. On your home network, `/configure` and `/update` have no password, so anyone on that network can change them. That's the same trust level as `/on` and `/off`.
 
+## Sinilink XY-WFUSB USB switch (tested)
+
+The **Sinilink XY-WFUSB** is a ready-made USB stick, about $9–11 on Amazon: a USB-A plug in, a switched USB-A socket out, and an ESP8285 inside. It's the neatest hardware option, with no relay wiring and silent switching, because the output is a MOSFET rather than a relay. The universal firmware runs on it. The catch is that the **first** install has to be done through tiny programming holes. The factory firmware has no wireless upload, and it isn't Tasmota. After that, updates go over WiFi.
+
+**What you need**
+
+- A USB-to-serial adapter that can be set to **3.3V**. The tested one was a CH340G module whose 3V3/5V jumper is set to **3V3**.
+- **30 AWG** solid wire (wire-wrap or hookup wire), a fine soldering tip, flux and fine solder.
+- A thin flat screwdriver or plastic spudger to open the case.
+
+**1. Open the case**
+
+The two halves are a tight friction fit on six pins, with no screws or glue. Work a thin blade into the seam **next to each pin** and twist gently, keeping the halves parallel so the pins don't snap. The board comes out freely.
+
+**2. Find the programming holes**
+
+There's a single row of six unlabelled holes (1.27 mm pitch, about 0.6–0.7 mm diameter), running between the two USB ends:
+
+```
+ FEMALE SOCKET (output)                        MALE PLUG (input)
+   [=====]   o    o    o    o    o    o   [=====]
+             1    2    3    4    5    6
+           3V3  RST GPIO0  RX   TX   GND
+```
+
+**Confirm the orientation with a multimeter before soldering:** hole 6 (GND) beeps to the **metal shell of the male USB plug**, and hole 1 doesn't.
+
+Pins and clips proved unreliable on holes this small. Soldering short wires is the dependable method.
+
+**3. Solder four wires (holes 3–6) and connect the adapter**
+
+| Hole | Signal | Suggested colour | Adapter pin |
+|---|---|---|---|
+| 3 | GPIO0 | yellow | **GND** (only while flashing) |
+| 4 | RX | green | **TXD** |
+| 5 | TX | blue | **RXD** |
+| 6 | GND | black | **GND** |
+| 1, 2 | 3V3, RST | none | not connected |
+
+Strip only about 1.5 mm, keep joints small, and check that no neighbouring holes are bridged. Don't connect the adapter's VCC: the stick is powered by its own USB plug.
+
+**4. Flash**
+
+1. Set the adapter's jumper to **3V3** and plug it into the computer.
+2. With GPIO0 on GND, plug the Sinilink into a **USB charger**. The blue and green LEDs light, meaning it's in flash mode.
+3. Set up the Arduino IDE:
+   - **Board: "Generic ESP8285 Module"** (not ESP8266; the ESP8285 needs DOUT flash mode).
+   - **Flash Size:** 1MB.
+   - **Erase Flash:** All Flash Contents.
+   - **Upload Speed:** 115200.
+4. Click **Upload**. Don't use the prebuilt release `.bin`, which is built for the ESP-01S.
+5. **If it can't connect:** swap the RX/TX wires at the adapter, or plug the Sinilink in while "Connecting…" is showing. The Serial Monitor at **74880 baud** shows `boot mode:(1,…)` when the stick is in flash mode.
+
+**5. Set up**
+
+1. Unplug the stick, disconnect GPIO0 from GND, and plug it in again.
+2. Join **ConfigRelay** and set it up as above, choosing **Relay board → Custom, pin GPIO5, ON when HIGH**. The Wemos D1 preset is equivalent.
+3. The Serial Monitor at **115200 baud** shows the firmware's start-up messages.
+
+**6. Finish**
+
+Clip the wires close to the board, check that nothing is bridged, and snap the case shut, lining the button up with its notch. The leftover solder makes it easy to re-attach wires if a future wireless update ever fails.
+
+Not yet supported on this stick: its push button (GPIO4) and its blue and green status LEDs (GPIO16 and GPIO14). The red LED follows the output.
+
 ## Flash the prebuilt firmware (no Arduino IDE needed)
 
 Each [release](https://github.com/W9TIM/CameraProbe/releases/latest) includes a ready-made file, `CameraProbeRelay-Universal-<version>.bin`. It's the same file for both boards. Download it, then use one of the two methods below.

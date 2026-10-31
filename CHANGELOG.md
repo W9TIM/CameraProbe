@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **Universal relay firmware** (`firmware/CameraProbeRelayUniversal/`): one firmware for the Wemos D1 Mini, the ESP-01S relay module, or a custom pin. It has no `secrets.h` and never needs re-flashing to change WiFi. If it can't join a saved network, it opens an open **ConfigRelay** setup network with a captive setup page. On your network, `http://onair.local/configure` shows and changes settings, with relay test buttons. It also supports a factory reset by powering it on 3 times quickly, and firmware updates over WiFi at `/update`. The `/on`, `/off` and `/status` endpoints are unchanged.
+- **Sinilink XY-WFUSB tested** with the universal firmware (Custom → GPIO5, HIGH). `firmware/README.md` documents opening the case, the programming-hole pinout, wiring, and flashing as **Generic ESP8285 Module**.
 
 ### Fixed
 
