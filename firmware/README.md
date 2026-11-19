@@ -1,34 +1,53 @@
 # CameraProbe Relay Firmware
 
-ESP8266 sketches that expose `GET /on`, `GET /off`, and `GET /status` over HTTP, so CameraProbe can flip a physical relay whenever your computer's camera turns on or off. All of them match CameraProbe's default config (`onair.local:80`).
+ESP8266 firmware that exposes `GET /on`, `GET /off`, and `GET /status` over HTTP, so CameraProbe can switch a light (or any USB device) whenever your computer's camera turns on or off. It matches CameraProbe's default config (`onair.local:80`).
 
-## Recommended: universal firmware (flash, boot, configure, go)
+## Recommended hardware: Sinilink XY-WFUSB USB switch stick
 
-`CameraProbeRelayUniversal/` is one firmware for every supported board. You don't edit a `secrets.h` file, and you never re-flash it to change WiFi. You set the WiFi network, board type and device name from a web page.
+![Sinilink XY-WFUSB: USB plug in, switched USB socket out, programming holes](../docs/images/sinilink-xy-wfusb.svg)
+
+The **Sinilink XY-WFUSB** is the preferred hardware for CameraProbe:
+
+- **Simple power in, power out.** Plug it into any USB charger and plug your USB light into it. There's no relay wiring, no separate power supply and no screw terminals.
+- **Clean thumb-drive packaging.** It's a finished, enclosed stick about 63 × 21 × 10 mm, so you don't need a 3D-printed case.
+- **Silent switching.** The output is a MOSFET, not a relay, so nothing clicks while you're on camera.
+- **Easy updates.** After a one-time first flash, every firmware update is a `.bin` upload over WiFi at `http://onair.local/update`. The case stays closed.
+- **Inexpensive:** roughly $5–11.
+
+**Where to buy** (third-party listings; they change, so search "Sinilink XY-WFUSB" if a link stops working):
+
+- Amazon: [Sinilink XY-WFUSB](https://www.amazon.com/dp/B0HFRWPWRY)
+- AliExpress: [Sinilink XY-WFUSB](https://www.aliexpress.us/item/3256812406700205.html)
+
+The stick ships with Sinilink's own app firmware. The **first** install of the CameraProbe firmware is done once through small programming holes inside the case; see [Sinilink XY-WFUSB: first flash](#sinilink-xy-wfusb-first-flash). The Wemos D1 Mini and ESP-01S relay boards remain supported for anyone who already has them.
+
+## Universal firmware (flash, boot, configure, go)
+
+`CameraProbeRelayUniversal/` (version 1.1.1) is one firmware for every supported board. You don't edit a `secrets.h` file, and you never re-flash it to change WiFi. You set the WiFi network, board type and device name from a web page.
 
 **First-time setup**
 
-1. Flash `CameraProbeRelayUniversal.ino` (see [Arduino IDE setup](#arduino-ide-setup); choose **Generic ESP8266 Module** for either board).
-2. Power the device. With no settings saved yet, it starts an open WiFi network called **ConfigRelay**.
-3. Join **ConfigRelay** from a phone or computer. The setup page usually opens by itself; if not, browse to `http://192.168.4.1`.
-4. Choose your WiFi network, enter its password, pick your **relay board** (Wemos D1 Mini + relay shield, ESP-01S relay module, or Custom pin/logic), and keep the device name `onair` unless you also change it in CameraProbe's Preferences.
+1. Flash `CameraProbeRelayUniversal.ino`. Use **Generic ESP8285 Module** for the Sinilink, or **Generic ESP8266 Module** for the Wemos D1 Mini and ESP-01S; see [Arduino IDE setup](#arduino-ide-setup).
+2. Power the device. With no settings saved yet, it starts an open WiFi network called **ConfigUSBSwitchStick**.
+3. Join **ConfigUSBSwitchStick** from a phone or computer. The setup page usually opens by itself; if not, browse to `http://192.168.4.1`.
+4. Choose your WiFi network and enter its password. The **relay board** is already set to **Sinilink XY-WFUSB USB switch**; change it only if you're using a Wemos D1 Mini + relay shield, an ESP-01S relay module, or a Custom pin/logic. Keep the device name `onair` unless you also change it in CameraProbe's Preferences.
 5. Click **Save and reboot**. The device joins your network. Reconnect your phone or computer to your home WiFi and open `http://onair.local/configure` to confirm. The page has **Relay on / Relay off** test buttons.
 
 **Later**
 
 - **Check or change settings:** `http://onair.local/configure`. The saved WiFi password is never shown. Leave the field blank to keep it.
-- **New router or WiFi password:** if the device can't join its saved network within about 30 seconds of power-up, it opens **ConfigRelay** again so you can enter the new details.
+- **New router or WiFi password:** if the device can't join its saved network within about 30 seconds of power-up, it opens **ConfigUSBSwitchStick** again so you can enter the new details.
 - **Power cuts:** if the router is still starting up, the device waits in setup mode. If nobody connects to it within 3 minutes, it restarts and tries the saved network again, so it reconnects by itself once the router is back.
-- **Factory reset (no button needed):** plug the device in for about 2 seconds and unplug it, two times. Plug it in a third time and leave it. All settings are erased and it starts **ConfigRelay**. The **Factory reset** button on the setup page does the same.
+- **Factory reset (no button needed):** plug the device in for about 2 seconds and unplug it, two times. Plug it in a third time and leave it. All settings are erased and it starts **ConfigUSBSwitchStick**. The **Factory reset** button on the setup page does the same.
 - **Firmware updates over WiFi:** `http://onair.local/update` accepts a `.bin` file. In the Arduino IDE, export one with **Sketch → Export Compiled Binary**. After the first USB flash, you don't need the programmer again.
 
-The relay always starts **off** at power-up. Until a board is chosen, the firmware doesn't drive any pin at all. That matters on the ESP-01S, where GPIO0 must not be held low while it boots.
+The output always starts **off** at power-up. The default board is the Sinilink (GPIO5). The firmware never drives GPIO0 unless the ESP-01S preset is chosen, which matters on the ESP-01S, where GPIO0 must not be held low while it boots.
 
-Security note: **ConfigRelay** is an open network by design, so it's easy for novices. It only appears when the device isn't on your WiFi. On your home network, `/configure` and `/update` have no password, so anyone on that network can change them. That's the same trust level as `/on` and `/off`.
+Security note: **ConfigUSBSwitchStick** is an open network by design, so it's easy for novices. It only appears when the device isn't on your WiFi. On your home network, `/configure` and `/update` have no password, so anyone on that network can change them. That's the same trust level as `/on` and `/off`.
 
-## Sinilink XY-WFUSB USB switch (tested)
+## Sinilink XY-WFUSB: first flash
 
-The **Sinilink XY-WFUSB** is a ready-made USB stick, about $9–11 on Amazon: a USB-A plug in, a switched USB-A socket out, and an ESP8285 inside. It's the neatest hardware option, with no relay wiring and silent switching, because the output is a MOSFET rather than a relay. The universal firmware runs on it. The catch is that the **first** install has to be done through tiny programming holes. The factory firmware has no wireless upload, and it isn't Tasmota. After that, updates go over WiFi.
+The stick has an ESP8285 inside. Its factory firmware has no wireless upload and isn't Tasmota, so the **first** install has to go through tiny programming holes inside the case. You only do this once per stick. After that, updates go over WiFi.
 
 **What you need**
 
@@ -82,18 +101,35 @@ Strip only about 1.5 mm, keep joints small, and check that no neighbouring holes
 **5. Set up**
 
 1. Unplug the stick, disconnect GPIO0 from GND, and plug it in again.
-2. Join **ConfigRelay** and set it up as above, choosing **Relay board → Custom, pin GPIO5, ON when HIGH**. The Wemos D1 preset is equivalent.
+2. Join **ConfigUSBSwitchStick** and set it up as above. **Relay board** is already set to **Sinilink XY-WFUSB USB switch**.
 3. The Serial Monitor at **115200 baud** shows the firmware's start-up messages.
 
 **6. Finish**
 
 Clip the wires close to the board, check that nothing is bridged, and snap the case shut, lining the button up with its notch. The leftover solder makes it easy to re-attach wires if a future wireless update ever fails.
 
-Not yet supported on this stick: its push button (GPIO4) and its blue and green status LEDs (GPIO16 and GPIO14). The red LED follows the output.
+**On the stick** (with the Sinilink preset):
+
+- **The button** toggles the output.
+- **The red LED** lights while the output is on.
+- **The blue LED** follows the switch, on when the output is on and off when it's off. It blinks slowly while in setup mode (**ConfigUSBSwitchStick**).
+- **Hardware variants:** some XY-WFUSB units have no red LED. On those, the blue LED is the output indicator. If a unit's output, button or LEDs don't respond with the Sinilink preset, it may use different pins. Use **Custom** to try another output pin, and please report the pinout.
+- **The green LED** is kept off.
+
+A stick flashed with firmware 1.0.x and set to **Custom → GPIO5, HIGH** keeps that setting after a WiFi update. Choose **Sinilink XY-WFUSB USB switch** on `/configure` to turn on the button and LEDs.
+
+**Updating the firmware later:** export a `.bin` with **Generic ESP8285 Module** selected (**Sketch → Export Compiled Binary**), or download the Sinilink `.bin` from the release page. Upload it at `http://onair.local/update`. Your settings are kept.
 
 ## Flash the prebuilt firmware (no Arduino IDE needed)
 
-Each [release](https://github.com/W9TIM/CameraProbe/releases/latest) includes a ready-made file, `CameraProbeRelay-Universal-<version>.bin`. It's the same file for both boards. Download it, then use one of the two methods below.
+Each [release](https://github.com/W9TIM/CameraProbe/releases/latest) includes ready-made files. **Pick the one for your hardware**, because the chips need different builds:
+
+| File | For |
+|---|---|
+| `CameraProbeRelay-Universal-<version>-Sinilink-ESP8285.bin` | **Sinilink XY-WFUSB** |
+| `CameraProbeRelay-Universal-<version>-ESP8266.bin` | Wemos D1 Mini, ESP-01S relay |
+
+Either file can be uploaded over WiFi at `http://onair.local/update` to a device that already runs the universal firmware. For a **first** install, use one of the methods below. For the Sinilink, the first flash needs the programming-hole wiring described in [Sinilink XY-WFUSB: first flash](#sinilink-xy-wfusb-first-flash).
 
 **Before you start, connect the board:**
 
@@ -130,11 +166,13 @@ You don't need USB again. Open `http://onair.local/update`, choose the new `.bin
 
 ### For maintainers: making the `.bin` for a release
 
-1. In the Arduino IDE, open `CameraProbeRelayUniversal.ino` with **Board: Generic ESP8266 Module** and **Flash Size: 1MB (FS:64KB OTA:~470KB)**.
-2. **Sketch → Export Compiled Binary.** The file appears in the sketch folder under `build/esp8266.esp8266.generic/CameraProbeRelayUniversal.ino.bin`.
-3. Rename it `CameraProbeRelay-Universal-<version>.bin` (the version is `FW_VERSION` at the top of the sketch) and attach it to the GitHub release.
+Export **two** builds, with **Flash Size: 1MB (FS:64KB OTA:~470KB)** for both:
 
-The 1MB build runs on the Wemos D1 Mini's larger 4MB flash too, so one file covers both boards. Don't commit the `build/` folder. The `.bin` belongs on the release page, not in the repo.
+1. **Sinilink:** set **Board: Generic ESP8285 Module**, then **Sketch → Export Compiled Binary**. The file appears under `build/esp8266.esp8266.esp8285/CameraProbeRelayUniversal.ino.bin`. Rename it `CameraProbeRelay-Universal-<version>-Sinilink-ESP8285.bin`.
+2. **ESP8266 boards:** set **Board: Generic ESP8266 Module** and export again. The file appears under `build/esp8266.esp8266.generic/CameraProbeRelayUniversal.ino.bin`. Rename it `CameraProbeRelay-Universal-<version>-ESP8266.bin`.
+3. Attach both to the GitHub release. The version is `FW_VERSION` at the top of the sketch.
+
+The ESP8266 1MB build also runs on the Wemos D1 Mini's larger 4MB flash. Don't commit the `build/` folder. The `.bin` belongs on the release page, not in the repo.
 
 ## Fixed-configuration sketches
 

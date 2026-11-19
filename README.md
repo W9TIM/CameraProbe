@@ -139,15 +139,30 @@ CameraProbe shells out to `/usr/bin/log stream` with a predicate that matches `c
 
 The menu bar's red dot is driven by that same local detection, independently of whether the relay/Home Assistant notifications actually went out: it lights up the instant a non-excluded app grabs the camera, and goes dark the instant the camera is released or Inactivate is toggled on. It never polls or depends on the relay or Home Assistant being enabled, configured, or reachable - it's purely "does CameraProbe itself currently consider the camera in use."
 
-## Relay firmware
+## Relay hardware and firmware
 
-The `firmware/` folder has the ESP8266 firmware for the physical relay CameraProbe talks to by default. The recommended **universal firmware** (`CameraProbeRelayUniversal/`) works on a **Wemos D1 Mini with relay shield**, the more compact **ESP-01S relay module**, or a ready-made **Sinilink XY-WFUSB** USB switch stick (silent, no wiring, but its first flash needs four small soldered wires). You flash it once, then set WiFi and the board type from a web page, either on the device's **ConfigRelay** setup network or at `http://onair.local/configure`. The original fixed-configuration sketches (`CameraProbeRelay/`, `CameraProbeRelay8266/`) are kept as well. See [firmware/README.md](firmware/README.md) for which to choose, wiring, Arduino IDE setup, and flashing instructions. If you already have relay hardware exposing `GET /on` / `GET /off` / `GET /status`, you don't need it; just point the relay host in Preferences (or `config.json`) at your existing device.
+### Recommended: Sinilink XY-WFUSB USB switch stick
 
-The low voltage relay is used for controlling power to a 5V (USB) light (On/Off) via WiFi. The control unit is constructed with a Wemos D1 Mini (ESP8266) with a single relay shield attached.
+![Sinilink XY-WFUSB USB switch stick](docs/images/sinilink-xy-wfusb.svg)
 
-This can be housed in a simple 3D printable enclosure and mounted near or for shaddow box lights, inside to keep it out of the way. This arrangement will require two USB connections. One to power the Wemos D1 and one to power the light itself, which will be switched on/off when the +5v line is interrupted by the relay shield. 
+The preferred way to run an "on air" light is a **Sinilink XY-WFUSB**: a USB thumb-drive-sized WiFi switch with a USB-A plug in and a switched USB-A socket out.
 
-Photos and 3D-printable files are included with this project:
+- **Simple to set up:** plug it into any USB charger and plug a USB light into it. There's no relay wiring and no second power supply.
+- **Finished packaging:** a closed stick, so no 3D-printed case is needed.
+- **Silent:** MOSFET switching, with no relay click.
+- **Easy updates:** after a one-time first flash, firmware updates are a `.bin` upload over WiFi.
+
+Where to buy (third-party listings; search "Sinilink XY-WFUSB" if a link has moved): [Amazon](https://www.amazon.com/dp/B0HFRWPWRY) · [AliExpress](https://www.aliexpress.us/item/3256812406700205.html)
+
+It runs this project's **universal firmware** (`firmware/CameraProbeRelayUniversal/`), which defaults to the Sinilink: the button toggles the light, and the red and blue LEDs light while the output is on (blue blinks in setup mode). The first install goes through small programming holes inside the case, using four soldered wires and a 3.3V USB-serial adapter. After that, the case stays closed. Step-by-step instructions are in [firmware/README.md](firmware/README.md#sinilink-xy-wfusb-first-flash).
+
+Setup is the same for every board: on first power-up the device opens an open WiFi network called **ConfigUSBSwitchStick**. Join it, enter your WiFi details, and the device appears as `onair.local`, CameraProbe's default relay host.
+
+### Other supported hardware
+
+The universal firmware also runs on a **Wemos D1 Mini with relay shield** and on the **ESP-01S relay module**. The original fixed-configuration sketches (`CameraProbeRelay/`, `CameraProbeRelay8266/`) are kept as well. See [firmware/README.md](firmware/README.md) for wiring and flashing. If you already have a device exposing `GET /on` / `GET /off` / `GET /status`, just point the relay host in Preferences (or `config.json`) at it.
+
+The relay boards switch a 5V (USB) light through a relay and need two USB connections: one powers the board, and one carries the switched +5V to the light. Photos and 3D-printable files are included with this project:
 
 - **ESP-01S relay case:** a compact two-part enclosure (base and friction-fit lid) - print-ready [STL](firmware/ESP8266%20Module%20Device/ESP01S_Relay_Case.stl), editable [OpenSCAD source](firmware/ESP8266%20Module%20Device/ESP01S_Relay_Case.scad), and the [design spec](firmware/ESP8266%20Module%20Device/CASE_DESIGN_SPEC.md). Includes a single-supply wiring photo and diagram in [firmware/README.md](firmware/README.md#single-supply-wiring-esp-01s-relay-variant).
 - **Wemos D1 Mini case:** see the `3D Printable Files` folder under `firmware/`.
@@ -187,7 +202,8 @@ CameraProbe calls two built-in Home Assistant webhooks (`camera_on` / `camera_of
 | `Info.plist.template` | App bundle metadata used by `build-app.sh` |
 | `Resources/AppIcon.svg`, `Resources/AppIcon.iconset/` | App icon source and compiled sizes - see "App icon" below |
 | `config.example.json` | Copyable config template |
-| `firmware/` | ESP8266 relay sketch, wiring docs, WiFi credentials template |
+| `firmware/` | Universal relay firmware (Sinilink XY-WFUSB, Wemos D1 Mini, ESP-01S), fixed-config sketches, wiring docs, cases |
+| `docs/images/` | Illustrations used by the docs |
 | `homeassistant/` | Home Assistant automation setup docs and example YAML |
 | `windows/` | The Windows tray app (C#/.NET 8) - see [`windows/README.md`](windows/README.md) |
 | `WINDOWS_PORT.md` | Windows port plan and camera-detection test findings |

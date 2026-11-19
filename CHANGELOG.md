@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **Universal relay firmware 1.1.1: Sinilink XY-WFUSB is the default and recommended hardware.**
+  - New **Sinilink XY-WFUSB USB switch** board preset (GPIO5, ON = HIGH), selected by default on a fresh install or after a factory reset.
+  - On the Sinilink, the push button (GPIO4) toggles the output, and the blue LED (GPIO16) follows the output (on/off) and blinks in setup mode.
+  - The setup network is renamed **ConfigUSBSwitchStick** (was ConfigRelay).
+  - Release `.bin` files are now built per chip: `-Sinilink-ESP8285.bin` and `-ESP8266.bin`.
+- Docs: the Sinilink XY-WFUSB is positioned as the preferred hardware, with purchase links, an illustration (`docs/images/sinilink-xy-wfusb.svg`), and an updated first-flash guide.
 - **Universal relay firmware** (`firmware/CameraProbeRelayUniversal/`): one firmware for the Wemos D1 Mini, the ESP-01S relay module, or a custom pin. It has no `secrets.h` and never needs re-flashing to change WiFi. If it can't join a saved network, it opens an open **ConfigRelay** setup network with a captive setup page. On your network, `http://onair.local/configure` shows and changes settings, with relay test buttons. It also supports a factory reset by powering it on 3 times quickly, and firmware updates over WiFi at `/update`. The `/on`, `/off` and `/status` endpoints are unchanged.
 - **Sinilink XY-WFUSB tested** with the universal firmware (Custom → GPIO5, HIGH). `firmware/README.md` documents opening the case, the programming-hole pinout, wiring, and flashing as **Generic ESP8285 Module**.
 

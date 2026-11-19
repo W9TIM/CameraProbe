@@ -6,8 +6,9 @@
  * web page.
  *
  *   - First boot, or when the saved WiFi can't be reached: the device opens
- *     an open WiFi network called "ConfigRelay". Join it with a phone or
- *     computer and the setup page opens (or browse to http://192.168.4.1).
+ *     an open WiFi network called "ConfigUSBSwitchStick". Join it with a
+ *     phone or computer and the setup page opens (or browse to
+ *     http://192.168.4.1).
  *   - Pick your WiFi, your relay board and a device name, then Save. The
  *     device reboots and joins your network.
  *   - On your network: http://onair.local/configure shows and changes the
@@ -18,9 +19,14 @@
  *     in setup mode with all settings erased.
  *   - Firmware updates over WiFi: http://onair.local/update
  *
- * Arduino IDE: Tools > Board > "Generic ESP8266 Module" works for both the
- * ESP-01S and the Wemos D1 Mini (pins are set by number, not D-labels).
- * Pick a Flash Size with an OTA area, e.g. "1MB (FS:64KB OTA:~470KB)".
+ * Recommended hardware: Sinilink XY-WFUSB USB switch stick (the default
+ * board). Also supports the Wemos D1 Mini + relay shield, the ESP-01S relay
+ * module, or any custom pin.
+ *
+ * Arduino IDE: Tools > Board > "Generic ESP8285 Module" for the Sinilink
+ * (ESP8285, needs DOUT flash mode); "Generic ESP8266 Module" for the ESP-01S
+ * and Wemos D1 Mini (pins are set by number, not D-labels). Pick a Flash
+ * Size with an OTA area, e.g. "1MB (FS:64KB OTA:~470KB)".
  * Everything used here ships with the ESP8266 board package.
  */
 
@@ -31,13 +37,13 @@
 #include <DNSServer.h>
 #include <EEPROM.h>
 
-#define FW_VERSION "1.0.0"
+#define FW_VERSION "1.1.1"
 
 // ---------------------------------------------------------------------------
 // Settings you'd only change when building your own variant
 // ---------------------------------------------------------------------------
 
-static const char*    SETUP_AP_SSID          = "ConfigRelay";  // open network, no password
+static const char*    SETUP_AP_SSID          = "ConfigUSBSwitchStick";  // open network, no password
 static const char*    DEFAULT_HOSTNAME       = "onair";        // CameraProbe's default relay host
 static const uint32_t CONNECT_TIMEOUT_MS     = 30UL * 1000UL;  // try the saved WiFi this long at boot
 static const uint32_t PORTAL_IDLE_RESTART_MS = 3UL * 60UL * 1000UL; // setup mode, nobody connected: reboot and retry saved WiFi
@@ -53,8 +59,15 @@ enum Board : uint8_t {
   BOARD_NONE     = 0,  // not chosen yet: no pin is driven
   BOARD_WEMOS_D1 = 1,  // Wemos D1 Mini + relay shield: D1 = GPIO5, on = HIGH
   BOARD_ESP01S   = 2,  // ESP-01S relay module: GPIO0, on = LOW
-  BOARD_CUSTOM   = 3   // any pin / logic, chosen on the setup page
+  BOARD_CUSTOM   = 3,  // any pin / logic, chosen on the setup page
+  BOARD_SINILINK = 4   // Sinilink XY-WFUSB: GPIO5 = output (on = HIGH),
+                       // GPIO4 = button, GPIO16 = blue LED, GPIO14 = green LED
 };
+
+// Sinilink XY-WFUSB extras
+static const uint8_t SINILINK_BUTTON_PIN = 4;   // LOW while pressed
+static const uint8_t SINILINK_BLUE_LED   = 16;  // on = output on, off = output off, blinking = setup mode
+static const uint8_t SINILINK_GREEN_LED  = 14;  // kept off
 
 // Pins offered for "Custom". Leaves out GPIO1/3 (serial) and 6-11 (flash).
 static const uint8_t CUSTOM_PINS[] = {0, 2, 4, 5, 12, 13, 14, 15, 16};
@@ -108,6 +121,10 @@ bool     bootCountPending = false;
 uint32_t restartAt        = 0;
 uint32_t lastApClientMs   = 0;
 uint32_t wifiLostSince    = 0;
+bool     sinilinkExtras   = false;
+bool     buttonLastRead   = HIGH;
+bool     buttonStable     = HIGH;
+uint32_t buttonChangedMs  = 0;
 
 static const int MAX_SCAN = 20;
 String scanned[MAX_SCAN];
@@ -137,9 +154,9 @@ void setDefaults() {
   cfg.magic           = CONFIG_MAGIC;
   cfg.version         = CONFIG_VERSION;
   strlcpy(cfg.host, DEFAULT_HOSTNAME, sizeof(cfg.host));
-  cfg.board           = BOARD_NONE;
-  cfg.customPin       = 0;
-  cfg.customActiveLow = 1;
+  cfg.board           = BOARD_SINILINK; // default: Sinilink XY-WFUSB
+  cfg.customPin       = 5;
+  cfg.customActiveLow = 0;
 }
 
 bool loadConfig() {
@@ -202,11 +219,14 @@ void serviceBootCounter() {
 // Relay
 // ---------------------------------------------------------------------------
 
+bool setRelay(bool on);  // defined below
+
 void applyBoard() {
   switch (cfg.board) {
     case BOARD_WEMOS_D1: relayPin = 5; relayActiveLow = false; break;  // D1
     case BOARD_ESP01S:   relayPin = 0; relayActiveLow = true;  break;  // GPIO0
     case BOARD_CUSTOM:   relayPin = cfg.customPin; relayActiveLow = cfg.customActiveLow != 0; break;
+    case BOARD_SINILINK: relayPin = 5; relayActiveLow = false; break;  // GPIO5
     default:             relayPin = -1; break;
   }
 
@@ -219,6 +239,38 @@ void applyBoard() {
     digitalWrite(relayPin, offLevel);
   }
   relayOn = false;
+
+  sinilinkExtras = (cfg.board == BOARD_SINILINK);
+  if (sinilinkExtras) {
+    pinMode(SINILINK_BUTTON_PIN, INPUT_PULLUP);
+    pinMode(SINILINK_BLUE_LED, OUTPUT);
+    pinMode(SINILINK_GREEN_LED, OUTPUT);
+    digitalWrite(SINILINK_BLUE_LED, LOW);
+    digitalWrite(SINILINK_GREEN_LED, LOW);
+  }
+}
+
+// Sinilink button: a short press toggles the output (debounced).
+void serviceButton() {
+  if (!sinilinkExtras) return;
+  bool level = digitalRead(SINILINK_BUTTON_PIN);
+  if (level != buttonLastRead) {
+    buttonLastRead = level;
+    buttonChangedMs = millis();
+  } else if (level != buttonStable && millis() - buttonChangedMs > 40) {
+    buttonStable = level;
+    if (buttonStable == LOW) {          // pressed
+      setRelay(!relayOn);
+      Serial.printf("Button: output %s\n", relayOn ? "ON" : "OFF");
+    }
+  }
+}
+
+// Sinilink blue LED: follows the output (on = switch on), slow blink in setup mode.
+void serviceStatusLed() {
+  if (!sinilinkExtras) return;
+  bool on = portalMode ? ((millis() / 500) % 2 == 0) : relayOn;
+  digitalWrite(SINILINK_BLUE_LED, on ? HIGH : LOW);
 }
 
 bool setRelay(bool on) {
@@ -233,6 +285,7 @@ const char* boardName(uint8_t b) {
     case BOARD_WEMOS_D1: return "Wemos D1 Mini + relay shield";
     case BOARD_ESP01S:   return "ESP-01S relay module";
     case BOARD_CUSTOM:   return "Custom";
+    case BOARD_SINILINK: return "Sinilink XY-WFUSB USB switch";
     default:             return "Not chosen";
   }
 }
@@ -406,13 +459,14 @@ void sendConfigPage(const String& message, bool isError) {
   p += F("'></label>");
 
   p += F("<fieldset><legend>Relay board</legend>");
-  const uint8_t boards[] = {BOARD_WEMOS_D1, BOARD_ESP01S, BOARD_CUSTOM};
+  const uint8_t boards[] = {BOARD_SINILINK, BOARD_WEMOS_D1, BOARD_ESP01S, BOARD_CUSTOM};
   const char* boardLabels[] = {
+    "Sinilink XY-WFUSB USB switch <span class=hint>(recommended; GPIO5, on = HIGH, button toggles)</span>",
     "Wemos D1 Mini + relay shield <span class=hint>(pin D1, on = HIGH)</span>",
     "ESP-01S relay module <span class=hint>(GPIO0, on = LOW)</span>",
     "Custom <span class=hint>(set pin and logic below)</span>"
   };
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 4; i++) {
     p += F("<label class=radio><input type=radio name=board value=");
     p += String(boards[i]);
     if (cfg.board == boards[i]) p += F(" checked");
@@ -536,7 +590,7 @@ void handleSave() {
   else if (pass.length() > 64)                         err = F("That WiFi password is too long (64 characters max).");
   else if (pass.length() > 0 && pass.length() < 8)     err = F("WiFi passwords are at least 8 characters.");
   else if (!validHostname(host))                       err = F("Device name: use only letters, numbers and hyphens (e.g. onair).");
-  else if (board < BOARD_WEMOS_D1 || board > BOARD_CUSTOM) err = F("Choose your relay board.");
+  else if (board < BOARD_WEMOS_D1 || board > BOARD_SINILINK) err = F("Choose your relay board.");
   else if (board == BOARD_CUSTOM && !isAllowedCustomPin(cpin)) err = F("Choose a valid custom relay pin.");
 
   if (err.length()) {
@@ -566,7 +620,7 @@ void handleSave() {
             "<b>http://");
   body += htmlEscape(cfg.host);
   body += F(".local/configure</b> to check it.<br><br>"
-            "If the device can't join, the <b>ConfigRelay</b> network comes back "
+            "If the device can't join, the <b>ConfigUSBSwitchStick</b> network comes back "
             "in about 30 seconds so you can try again.");
   sendMessagePage("Settings saved", body);
   scheduleRestart(2000);
@@ -577,7 +631,7 @@ void handleReset() {
   setDefaults();
   saveConfig();
   sendMessagePage("Settings erased",
-                  "The device is restarting in setup mode. Join the <b>ConfigRelay</b> "
+                  "The device is restarting in setup mode. Join the <b>ConfigUSBSwitchStick</b> "
                   "WiFi network to set it up again.");
   scheduleRestart(2000);
 }
@@ -681,6 +735,8 @@ void setup() {
 
 void loop() {
   serviceBootCounter();
+  serviceButton();
+  serviceStatusLed();
 
   if (portalMode) {
     dnsServer.processNextRequest();
