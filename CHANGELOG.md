@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Universal relay firmware 1.1.2:** the device's setup page, browser title and serial start-up message are now branded **USB-Switch Relay** (were "CameraProbe Relay"), to describe what the device does. No functional changes.
+
 ### Added
 
 - **Universal relay firmware 1.1.1: Sinilink XY-WFUSB is the default and recommended hardware.**

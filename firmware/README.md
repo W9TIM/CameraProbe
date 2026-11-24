@@ -23,7 +23,7 @@ The stick ships with Sinilink's own app firmware. The **first** install of the C
 
 ## Universal firmware (flash, boot, configure, go)
 
-`CameraProbeRelayUniversal/` (version 1.1.1) is one firmware for every supported board. You don't edit a `secrets.h` file, and you never re-flash it to change WiFi. You set the WiFi network, board type and device name from a web page.
+`CameraProbeRelayUniversal/` (version 1.1.2) is one firmware for every supported board. You don't edit a `secrets.h` file, and you never re-flash it to change WiFi. You set the WiFi network, board type and device name from a web page.
 
 **First-time setup**
 

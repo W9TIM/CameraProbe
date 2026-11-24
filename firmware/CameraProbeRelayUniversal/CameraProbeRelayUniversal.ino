@@ -1,5 +1,5 @@
 /*
- * CameraProbe Relay - Universal Firmware
+ * USB-Switch Relay - Universal Firmware
  *
  * One firmware for every supported relay board. No secrets.h, no editing,
  * no re-flashing to change WiFi: flash it once, then configure it from a
@@ -12,8 +12,8 @@
  *   - Pick your WiFi, your relay board and a device name, then Save. The
  *     device reboots and joins your network.
  *   - On your network: http://onair.local/configure shows and changes the
- *     settings. /on, /off and /status work exactly as before, so CameraProbe
- *     needs no changes.
+ *     settings. /on, /off and /status work exactly as before, so the
+ *     CameraProbe app (or Home Assistant) needs no changes.
  *   - Factory reset without a button: plug it in for about 2 seconds and
  *     unplug it, twice; then plug it in a third time and leave it. It starts
  *     in setup mode with all settings erased.
@@ -37,14 +37,14 @@
 #include <DNSServer.h>
 #include <EEPROM.h>
 
-#define FW_VERSION "1.1.1"
+#define FW_VERSION "1.1.2"
 
 // ---------------------------------------------------------------------------
 // Settings you'd only change when building your own variant
 // ---------------------------------------------------------------------------
 
 static const char*    SETUP_AP_SSID          = "ConfigUSBSwitchStick";  // open network, no password
-static const char*    DEFAULT_HOSTNAME       = "onair";        // CameraProbe's default relay host
+static const char*    DEFAULT_HOSTNAME       = "onair";        // the CameraProbe app's default relay host
 static const uint32_t CONNECT_TIMEOUT_MS     = 30UL * 1000UL;  // try the saved WiFi this long at boot
 static const uint32_t PORTAL_IDLE_RESTART_MS = 3UL * 60UL * 1000UL; // setup mode, nobody connected: reboot and retry saved WiFi
 static const uint32_t WIFI_LOST_RESTART_MS   = 5UL * 60UL * 1000UL; // connected mode, WiFi gone this long: reboot
@@ -374,7 +374,7 @@ void scheduleRestart(uint32_t delayMs) {
 const char PAGE_HEAD[] PROGMEM =
   "<!DOCTYPE html><html><head><meta charset=utf-8>"
   "<meta name=viewport content='width=device-width,initial-scale=1'>"
-  "<title>CameraProbe Relay Setup</title><style>"
+  "<title>USB-Switch Relay Setup</title><style>"
   "body{font-family:-apple-system,'Segoe UI',Arial,sans-serif;max-width:480px;margin:20px auto;padding:0 14px;color:#222}"
   "h1{font-size:1.4em}h2{font-size:1.1em;margin-top:28px}"
   "label{display:block;margin-top:14px;font-weight:600}"
@@ -385,7 +385,7 @@ const char PAGE_HEAD[] PROGMEM =
   "button{margin-top:16px;padding:10px 16px;font-size:1em}"
   "fieldset{margin-top:16px;border:1px solid #ccc;border-radius:6px}"
   ".radio{font-weight:normal}.radio input{width:auto;margin-right:8px}"
-  "</style></head><body><h1>CameraProbe Relay Setup</h1>";
+  "</style></head><body><h1>USB-Switch Relay Setup</h1>";
 
 void sendConfigPage(const String& message, bool isError) {
   String p;
@@ -453,7 +453,7 @@ void sendConfigPage(const String& message, bool isError) {
   p += F("</span><input type=password name=pass maxlength=64 autocomplete=off></label>");
 
   p += F("<label>Device name <span class=hint>(reach it at http://<i>name</i>.local - "
-         "CameraProbe expects <b>onair</b> unless you change it there too)</span>"
+         "the CameraProbe app expects <b>onair</b> unless you change it there too)</span>"
          "<input name=host maxlength=32 autocapitalize=none autocorrect=off value='");
   p += htmlEscape(cfg.host);
   p += F("'></label>");
@@ -512,7 +512,7 @@ void sendConfigPage(const String& message, bool isError) {
          "<p><a href=/update>Update firmware</a> <span class=hint>(upload a .bin file)</span></p>"
          "<form method=POST action=/reset onsubmit=\"return confirm('Erase all settings and restart in setup mode?')\">"
          "<button type=submit>Factory reset</button></form>"
-         "<p class=hint>CameraProbe Relay firmware " FW_VERSION "</p></body></html>");
+         "<p class=hint>USB-Switch Relay firmware " FW_VERSION "</p></body></html>");
 
   server.send(200, "text/html", p);
 }
@@ -698,7 +698,7 @@ void setup() {
   Serial.begin(115200);
   delay(50);
   Serial.println();
-  Serial.println("CameraProbe Relay firmware " FW_VERSION);
+  Serial.println("USB-Switch Relay firmware " FW_VERSION);
 
   EEPROM.begin(EEPROM_SIZE);
   if (!loadConfig()) Serial.println("No saved settings - starting fresh");
