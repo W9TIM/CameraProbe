@@ -126,8 +126,8 @@ Each [release](https://github.com/W9TIM/CameraProbe/releases/latest) includes re
 
 | File | For |
 |---|---|
-| `CameraProbeRelay-Universal-<version>-Sinilink-ESP8285.bin` | **Sinilink XY-WFUSB** |
-| `CameraProbeRelay-Universal-<version>-ESP8266.bin` | Wemos D1 Mini, ESP-01S relay |
+| `CameraProbeRelayUniversal-<version>-Sinilink-ESP8285.bin` | **Sinilink XY-WFUSB** |
+| `CameraProbeRelayUniversal-<version>-ESP8266.bin` | Wemos D1 Mini, ESP-01S relay |
 
 Either file can be uploaded over WiFi at `http://onair.local/update` to a device that already runs the universal firmware. For a **first** install, use one of the methods below. For the Sinilink, the first flash needs the programming-hole wiring described in [Sinilink XY-WFUSB: first flash](#sinilink-xy-wfusb-first-flash).
 
@@ -151,7 +151,7 @@ Use Chrome or Edge on a Mac or PC. Safari isn't supported.
 
 ```
 pip install esptool
-esptool --port PORT write-flash 0x0 CameraProbeRelay-Universal-<version>.bin
+esptool --port PORT write-flash 0x0 CameraProbeRelayUniversal-<version>-<board>.bin
 ```
 
 Replace `PORT` with the board's port: on macOS something like `/dev/cu.usbserial-110` (list them with `ls /dev/cu.*`), on Windows `COM3` or similar (shown in Device Manager → Ports). Older esptool versions use `esptool.py` and `write_flash` instead. Add `erase-flash` as a separate command first if you want a clean start:
@@ -168,8 +168,8 @@ You don't need USB again. Open `http://onair.local/update`, choose the new `.bin
 
 Export **two** builds, with **Flash Size: 1MB (FS:64KB OTA:~470KB)** for both:
 
-1. **Sinilink:** set **Board: Generic ESP8285 Module**, then **Sketch → Export Compiled Binary**. The file appears under `build/esp8266.esp8266.esp8285/CameraProbeRelayUniversal.ino.bin`. Rename it `CameraProbeRelay-Universal-<version>-Sinilink-ESP8285.bin`.
-2. **ESP8266 boards:** set **Board: Generic ESP8266 Module** and export again. The file appears under `build/esp8266.esp8266.generic/CameraProbeRelayUniversal.ino.bin`. Rename it `CameraProbeRelay-Universal-<version>-ESP8266.bin`.
+1. **Sinilink:** set **Board: Generic ESP8285 Module**, then **Sketch → Export Compiled Binary**. The file appears under `build/esp8266.esp8266.esp8285/CameraProbeRelayUniversal.ino.bin`. Rename it `CameraProbeRelayUniversal-<version>-Sinilink-ESP8285.bin`.
+2. **ESP8266 boards:** set **Board: Generic ESP8266 Module** and export again. The file appears under `build/esp8266.esp8266.generic/CameraProbeRelayUniversal.ino.bin`. Rename it `CameraProbeRelayUniversal-<version>-ESP8266.bin`.
 3. Attach both to the GitHub release. The version is `FW_VERSION` at the top of the sketch.
 
 The ESP8266 1MB build also runs on the Wemos D1 Mini's larger 4MB flash. Don't commit the `build/` folder. The `.bin` belongs on the release page, not in the repo.
